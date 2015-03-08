@@ -1,5 +1,0 @@
-c:\users\kireino\documents\visual studio 2013\Projects\ViServer\ViServer\bin\Debug\ViServer.exe
-c:\users\kireino\documents\visual studio 2013\Projects\ViServer\ViServer\bin\Debug\ViServer.pdb
-c:\users\kireino\documents\visual studio 2013\Projects\ViServer\ViServer\obj\Debug\ViServer.csprojResolveAssemblyReference.cache
-c:\users\kireino\documents\visual studio 2013\Projects\ViServer\ViServer\obj\Debug\ViServer.exe
-c:\users\kireino\documents\visual studio 2013\Projects\ViServer\ViServer\obj\Debug\ViServer.pdb
