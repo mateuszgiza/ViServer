@@ -15,8 +15,6 @@ ViComm/[Bb]in/
 ViServer/[Oo]bj/
 ViServer/[Bb]in/
 
-ViServer/obj/Debug/
-
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/
