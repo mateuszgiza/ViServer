@@ -4,26 +4,23 @@ In order to increase my programming experience I've started to create my first s
 
 ### ViServer ###
 
-* Quick summary
-* Version
-* [Learn Markdown](https://bitbucket.org/tutorials/markdowndemo)
+* Listening for clients
+* When client is joining then create new object to manage his actions
+* 2 Threads per client
 
-### How do I get set up? ###
+### ViClient ###
 
-* Summary of set up
-* Configuration
-* Dependencies
-* Database configuration
-* How to run tests
-* Deployment instructions
+* GUI Application
+* Connecting with server on app startup
+* Login with name to server
+* Individual thread for receiving
 
-### Contribution guidelines ###
+### ViData ###
 
-* Writing tests
-* Code review
-* Other guidelines
+* There's Packet structure with serializing
+* Tools which can help a lot at client and server side
+* Database connection for future clients managing (ie. registration, login)
 
-### Who do I talk to? ###
+### Note ###
 
-* Repo owner or admin
-* Other community or team contact
+Please notice that it's my first that big project and I'm trying to develop my skills to higher level. If you've found some bugs or know better solutions than I'll be thankful if you'll share it with me.
