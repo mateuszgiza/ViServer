@@ -1,17 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using System.Net;
 using System.Net.Sockets;
-using Newtonsoft.Json;
-using System.Threading.Tasks;
+using ViData;
 using System.Threading;
-using System.Runtime.InteropServices;
 
 namespace ViComm
 {
@@ -26,10 +21,10 @@ namespace ViComm
 
 		private void Form1_Load(object sender, EventArgs e)
 		{
-			client = new Client("127.0.0.1", 5555, this);
-
-			client.Connect();
 			this.txt_name.Focus();
+
+			client = new Client(Tools.GetIP(), 5555, this);
+			client.Connect();
 		}
 
 		private void inputBox_KeyDown(object sender, KeyEventArgs e)
@@ -46,8 +41,9 @@ namespace ViComm
 
 		private void Form1_FormClosing(object sender, FormClosingEventArgs e)
 		{
-			if ( client.GetStream != null && !client.GetClient.Connected )
+			if ( client != null ) {
 				client.Disconnect();
+			}
 		}
 
 		private void btn_login_Click(object sender, EventArgs e)
@@ -56,216 +52,117 @@ namespace ViComm
 			this.inputBox.Enabled = true;
 			this.inputBox.Focus();
 		}
-	}
 
-	struct Packet
-	{
-		public PacketStruct receive;
-
-		public Packet(PacketStruct p)
+		private void txt_name_KeyDown(object sender, KeyEventArgs e)
 		{
-			receive = p;
-		}
-
-		public string PacketToString()
-		{
-			return JsonConvert.SerializeObject(receive, Formatting.Indented);
-		}
-
-		public PacketStruct ToPacket(string p)
-		{
-			receive = JsonConvert.DeserializeObject<PacketStruct>(p);
-			return receive;
+			if ( e.KeyCode == Keys.Enter ) {
+				e.SuppressKeyPress = true;
+				if ( this.txt_name.Text.Length > 0 ) {
+					client.Login(this.txt_name.Text);
+					this.inputBox.Enabled = true;
+					this.inputBox.Focus();
+				}
+			}
 		}
 	}
-
-#pragma warning disable 0649
-	public struct PacketStruct
-	{
-		public Int16 type;
-		public String receiver;
-		public String sender;
-		public String message;
-	}
-#pragma warning restore 0649
 
 	class Client
 	{
-		TcpClient client;
-		NetworkStream stream;
+		private Socket socket;
+		private IPEndPoint ip;
+		private string guid;
 		public String Name;
-		private Int32 port;
-		private String host;
-		private string password;
 
 		private Form1 form;
 
-		Queue<PacketStruct> packets = new Queue<PacketStruct>();
-		Byte[] data = new Byte[1024];
-
-		public Client(string host, int port, Form1 f, string pwd = null)
+		public Client(string host, int port, Form1 f)
 		{
-			this.host = host;
-			this.port = port;
-			this.password = pwd;
+			socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+			this.ip = new IPEndPoint(IPAddress.Parse(host), port);
 			this.form = f;
-
-			BackgroundWorker bg = new BackgroundWorker();
-			bg.DoWork += bg_DoWork;
-			bg.RunWorkerAsync();
-		}
-
-		public NetworkStream GetStream
-		{
-			get
-			{
-				return this.stream;
-			}
-		}
-		public TcpClient GetClient
-		{
-			get
-			{
-				return this.client;
-			}
-		}
-
-		void bg_DoWork(object sender, DoWorkEventArgs e)
-		{
-			while ( true ) {
-				Receive();
-			}
 		}
 
 		public void Login(String name)
 		{
-			PacketStruct packet = new PacketStruct();
 			this.Name = name;
-			packet.type = 0;
-			packet.sender = Name;
-			packet.message = "login";
 
-			data = Encoding.UTF8.GetBytes(new Packet(packet).PacketToString());
-			stream.Write(data, 0, data.Length);
+			Packet p = new Packet(PacketType.Login);
+			p.sender = Name;
+			socket.Send(p.ToBytes());
 		}
 
 		public void Connect()
 		{
 			try {
-				client = new TcpClient(host, port);
+				socket.Connect(ip);
 
-				stream = client.GetStream();
 				form.log.Text = "*Connected!";
-				Receive();
+				rec = new Thread(Receive);
+				rec.Start();
 			}
-			catch ( ArgumentNullException e ) {
-				// TODO: Save to file
-				form.log.Text = String.Format("|#| ArgumentNullException: {0}", e);
-			}
-			catch ( SocketException e ) {
-				// TODO: Save to file
-				form.log.Text = String.Format("|#| SocketException: {0}", e);
+			catch {
+				form.log.Text = "Could not connect to server!";
+				Console.WriteLine("Could not connect to server!");
 			}
 		}
 
 		public void Send(String msg)
 		{
-			PacketStruct packet = new PacketStruct();
-			packet.type = 1;
-			packet.receiver = form.txt_receiver.Text;
-			packet.sender = Name;
-			packet.message = msg;
+			Packet p = new Packet(PacketType.MultiChat);
+			p.sender = Name;
+			p.message = msg;
 
-			// Send Parsed Packet
-			data = Encoding.UTF8.GetBytes(new Packet(packet).PacketToString());
-			stream.BeginWrite(data, 0, data.Length, new AsyncCallback(OnSend), stream);
-			Console.WriteLine("Sending: {0} B to {1}", data.Length, packet.receiver);
-
-			AppendText(packet);
+			socket.Send(p.ToBytes());
 		}
 
-		private void OnSend(IAsyncResult result)
-		{
-			NetworkStream stream = (NetworkStream) result.AsyncState;
-
-			try {
-				stream.EndWrite(result);
-			}
-			catch ( SocketException socketException ) {
-				if ( socketException.ErrorCode == 10054 ||
-					( ( socketException.ErrorCode != 10004 ) &&
-					( socketException.ErrorCode != 10053 ) ) ) {
-					String remoteIP = ( (IPEndPoint) client.Client.RemoteEndPoint ).Address.ToString();
-					String remotePort = ( (IPEndPoint) client.Client.RemoteEndPoint ).Port.ToString();
-					CloseConnection();
-				}
-			}
-			catch ( Exception exception ) {
-				MessageBox.Show(exception.Message + "\n" + exception.StackTrace, Name);
-				CloseConnection();
-			}
-		}
-
+		Thread rec;
 		public void Receive()
 		{
-			stream = client.GetStream();
+			byte[] buffer;
+			int readBytes;
 
-			// Read Packet
-			data = new Byte[1024];
-			ContinueReceiving(stream, data, data.Length, 0);
-		}
-
-		private void ContinueReceiving(NetworkStream stream, Byte[] data, int full, int received)
-		{
-			stream.BeginRead(data, received, full - received, (asyncResult) => {
+			while ( true ) {
 				try {
-					full = stream.EndRead(asyncResult);
-				}
-				catch ( SocketException socketException ) {
-					if ( socketException.ErrorCode == 10054 ||
-						( ( socketException.ErrorCode != 10004 ) &&
-						( socketException.ErrorCode != 10053 ) ) ) {
-						String remoteIP = ( (IPEndPoint) client.Client.RemoteEndPoint ).Address.ToString();
-						String remotePort = ( (IPEndPoint) client.Client.RemoteEndPoint ).Port.ToString();
-						CloseConnection();
+					buffer = new byte[socket.SendBufferSize];
+					readBytes = socket.Receive(buffer);
+
+					if ( readBytes > 0 ) {
+						Received(new Packet(buffer));
 					}
 				}
-				catch ( Exception exception ) {
-					MessageBox.Show(exception.Message + "\n" + exception.StackTrace, Name);
-					CloseConnection();
-				}
-
-				if ( full == 0 ) {
-					return;
-				}
-
-				received += full;
-				Console.WriteLine("Size: {0} B\tReceived: {1} B", full, received);
-
-				if ( full <= received ) {
-					Received(data, full);
-				}
-				else {
-					ContinueReceiving(stream, data, full, received);
-				}
-			}, null);
-		}
-
-		private void Received(Byte[] data, int size)
-		{
-			if ( size != 0 ) {
-				PacketStruct packet = new Packet().ToPacket(Encoding.UTF8.GetString(data, 0, size));
-
-				if ( packet.type > 0 ) {
-					AppendText(packet);
+				catch ( SocketException e ) {
+					Console.WriteLine("Server lost!");
+					Console.WriteLine(e);
 				}
 			}
-
-			ContinueReceiving(stream, new Byte[1024], 1024, 0);
 		}
 
-		public delegate void SetTextCallback(PacketStruct p);
-		private void AppendText(PacketStruct packet)
+		private void Received(Packet p)
+		{
+			switch ( p.type ) {
+				case PacketType.Login:
+					guid = p.message;
+					break;
+				case PacketType.Disconnect:
+					// Reserved
+					break;
+				case PacketType.Register:
+					// Reserved
+					break;
+				case PacketType.SingleChat:
+					// Reserved
+					break;
+				case PacketType.MultiChat:
+					AppendText(p);
+					break;
+				default:
+
+					break;
+			}
+		}
+
+		public delegate void SetTextCallback(Packet p);
+		private void AppendText(Packet packet)
 		{
 			if ( form.outputBox.InvokeRequired ) {
 				SetTextCallback callb = new SetTextCallback(AppendText);
@@ -284,23 +181,20 @@ namespace ViComm
 
 		public void Disconnect()
 		{
-			PacketStruct packet = new PacketStruct();
-			packet.type = 0;
-			packet.message = "disconnect";
+			if ( socket.Connected ) {
+				Packet p = new Packet(PacketType.Disconnect);
+				p.message = guid;
+				socket.Send(p.ToBytes());
 
-			data = Encoding.UTF8.GetBytes(new Packet(packet).PacketToString());
-			stream.Write(data, 0, data.Length);
-			stream.Flush();
-
-			CloseConnection();
+				CloseConnection();
+			}
 		}
 
 		private void CloseConnection()
 		{
-			client.Client.Disconnect(true);
-			stream.Close();
-			stream = null;
-			client.Close();
+			rec.Abort();
+			rec = null;
+			socket.Close();
 		}
 	}
 }

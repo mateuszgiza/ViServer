@@ -42,14 +42,15 @@
 			this.outputBox.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-			this.outputBox.BackColor = System.Drawing.Color.SkyBlue;
-			this.outputBox.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
+			this.outputBox.BackColor = System.Drawing.SystemColors.InactiveCaptionText;
+			this.outputBox.BorderStyle = System.Windows.Forms.BorderStyle.None;
+			this.outputBox.Font = new System.Drawing.Font("Segoe UI Light", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
 			this.outputBox.Location = new System.Drawing.Point(12, 34);
 			this.outputBox.Name = "outputBox";
 			this.outputBox.ReadOnly = true;
 			this.outputBox.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.Vertical;
 			this.outputBox.Size = new System.Drawing.Size(460, 267);
-			this.outputBox.TabIndex = 0;
+			this.outputBox.TabIndex = 999;
 			this.outputBox.Text = "";
 			// 
 			// inputBox
@@ -76,10 +77,10 @@
 			// lb_nick
 			// 
 			this.lb_nick.AutoSize = true;
-			this.lb_nick.Font = new System.Drawing.Font("Microsoft Sans Serif", 11F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
+			this.lb_nick.Font = new System.Drawing.Font("Segoe UI Light", 11F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
 			this.lb_nick.Location = new System.Drawing.Point(12, 9);
 			this.lb_nick.Name = "lb_nick";
-			this.lb_nick.Size = new System.Drawing.Size(46, 18);
+			this.lb_nick.Size = new System.Drawing.Size(44, 20);
 			this.lb_nick.TabIndex = 3;
 			this.lb_nick.Text = "Nick: ";
 			// 
@@ -88,7 +89,8 @@
 			this.txt_name.Location = new System.Drawing.Point(64, 7);
 			this.txt_name.Name = "txt_name";
 			this.txt_name.Size = new System.Drawing.Size(119, 20);
-			this.txt_name.TabIndex = 4;
+			this.txt_name.TabIndex = 0;
+			this.txt_name.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txt_name_KeyDown);
 			// 
 			// btn_login
 			// 
@@ -103,10 +105,10 @@
 			// lb_to
 			// 
 			this.lb_to.AutoSize = true;
-			this.lb_to.Font = new System.Drawing.Font("Microsoft Sans Serif", 11F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
+			this.lb_to.Font = new System.Drawing.Font("Segoe UI Light", 11F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
 			this.lb_to.Location = new System.Drawing.Point(270, 6);
 			this.lb_to.Name = "lb_to";
-			this.lb_to.Size = new System.Drawing.Size(34, 18);
+			this.lb_to.Size = new System.Drawing.Size(32, 20);
 			this.lb_to.TabIndex = 6;
 			this.lb_to.Text = "To: ";
 			// 
@@ -121,7 +123,7 @@
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.BackColor = System.Drawing.Color.SkyBlue;
+			this.BackColor = System.Drawing.SystemColors.InactiveCaptionText;
 			this.ClientSize = new System.Drawing.Size(484, 362);
 			this.Controls.Add(this.txt_receiver);
 			this.Controls.Add(this.lb_to);

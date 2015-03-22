@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ViServer", "ViServer\ViServ
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ViComm", "ViComm\ViComm.csproj", "{7AEB735F-5DAD-424B-A05B-6B55C29ECF54}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ViData", "ViData\ViData.csproj", "{9AB6FFE1-0720-4A17-91BE-01F8F6095465}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{7AEB735F-5DAD-424B-A05B-6B55C29ECF54}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7AEB735F-5DAD-424B-A05B-6B55C29ECF54}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7AEB735F-5DAD-424B-A05B-6B55C29ECF54}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9AB6FFE1-0720-4A17-91BE-01F8F6095465}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9AB6FFE1-0720-4A17-91BE-01F8F6095465}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9AB6FFE1-0720-4A17-91BE-01F8F6095465}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9AB6FFE1-0720-4A17-91BE-01F8F6095465}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

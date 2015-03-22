@@ -1,0 +1,7 @@
+﻿USE [db_ViServer]
+GO
+
+CREATE USER [ViServer] WITH PASSWORD = N'#password#';
+GO
+
+GRANT CONNECT, SELECT, INSERT, UPDATE, DELETE, CREATE TABLE TO [ViServer];
