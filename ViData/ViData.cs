@@ -2,11 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Newtonsoft.Json;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
 using System.Net;
-using System.Data.SqlClient;
+using System.Data;
+using System.Security.Cryptography;
+
+using MySql.Data.MySqlClient;
 
 namespace ViData
 {
@@ -67,15 +69,42 @@ namespace ViData
 		{
 			return Dns.GetHostAddresses(host)[0].ToString();
 		}
+
+		public static byte[] GenerateSalt()
+		{
+			RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider();
+			byte[] buff = new byte[128];
+			rng.GetBytes(buff);
+
+			return buff;
+		}
+
+		public static byte[] Hash(string value, byte[] salt)
+		{
+			return Hash(Encoding.UTF8.GetBytes(value), salt);
+		}
+
+		public static byte[] Hash(byte[] value, byte[] salt)
+		{
+			byte[] saltedValue = value.Concat(salt).ToArray();
+
+			return new SHA256Managed().ComputeHash(saltedValue);
+		}
 	}
 
 	[Serializable]
 	public class Packet
 	{
 		public PacketType type;
+		public User user;
 		public string sender;
 		public string receiver;
 		public string message;
+
+		public Packet(PacketType type)
+		{
+			this.type = type;
+		}
 
 		public Packet(PacketType type, string msg)
 		{
@@ -83,9 +112,11 @@ namespace ViData
 			this.message = msg;
 		}
 
-		public Packet(PacketType type)
+		public Packet(PacketType type, User u, string msg)
 		{
 			this.type = type;
+			this.user = u;
+			this.message = msg;
 		}
 
 		public Packet(byte[] buffer)
@@ -97,6 +128,7 @@ namespace ViData
 			ms.Close();
 
 			type = p.type;
+			user = p.user;
 			sender = p.sender;
 			receiver = p.receiver;
 			message = p.message;
@@ -137,25 +169,25 @@ namespace ViData
 		Disconnect
 	}
 
-	public class Database
+	public class Database : IDisposable
 	{
-		private SqlConnection sql;
-		private SqlCommand command;
-		private SqlDataReader reader;
+		MySqlConnection mysql;
+		MySqlCommand cmd;
+		MySqlDataReader reader;
+		//MySqlDataAdapter adapter;
 
 		public string Query;
 
+		public Database()
+			: this(false)
+		{
+		}
+
 		public Database(bool start)
 		{
-			sql = new SqlConnection();
-
-			string path = Environment.CurrentDirectory;
-
-			sql.ConnectionString = @"Data Source=.\SQLEXPRESS;
-						  AttachDbFilename=" + path + @"\ViServer.mdf;
-						  Integrated Security=True;
-						  Connect Timeout=30;
-						  User Instance=True";
+			mysql = new MySqlConnection();
+			mysql.ConnectionString = "server=127.0.0.1;uid=ViServer;" +
+							"pwd=lubiemaslo;database=server;Charset=utf8;";
 
 			if ( start )
 				Connect();
@@ -164,57 +196,229 @@ namespace ViData
 		public void Connect()
 		{
 			try {
-				sql.Open();
-				Console.WriteLine("Connection Open!");
-
+				mysql.Open();
 			}
-			catch ( Exception ex ) {
-				Console.WriteLine("Can not open connection!");
+			catch ( MySqlException ex ) {
+				Exception(ex);
 			}
 		}
 
-		public bool Execute(string query)
+		public MySqlConnection Connection
 		{
-			Query = query;
-			return Execute();
+			get
+			{
+				return this.mysql;
+			}
 		}
 
-		public bool Execute()
+		public static DataTable Select(MySqlCommand cmd)
 		{
-			if ( Query == null ) {
-				return false;
+			DataTable tb = new DataTable();
+			MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
+
+			using ( cmd ) {
+				try {
+					if ( cmd.Connection.State == ConnectionState.Closed ) {
+						cmd.Connection.Open();
+					}
+
+					adapter.Fill(tb);
+
+					cmd.Connection.Close();
+				}
+				catch ( MySqlException ex ) {
+					Exception(ex);
+				}
 			}
 
-			command = new SqlCommand(Query, sql);
-			reader = command.ExecuteReader();
-			while ( reader.Read() ) {
-				//MessageBox.Show(reader.GetValue(0) + " - " + reader.GetValue(1) + " - " + reader.GetValue(2));
-			}
-			reader.Close();
-			command.Dispose();
+			return tb;
+		}
 
-			return true;
+		public static int Insert(MySqlCommand cmd)
+		{
+			int ret = -1;
+			using ( cmd ) {
+				try {
+					if ( cmd.Connection.State == ConnectionState.Closed ) {
+						cmd.Connection.Open();
+					}
+
+					ret = cmd.ExecuteNonQuery();
+
+					cmd.Connection.Close();
+				}
+				catch ( MySqlException ex ) {
+					Exception(ex);
+				}
+			}
+
+			return ret;
+		}
+
+		public static int Exception(MySqlException ex)
+		{
+			int id = -1;
+
+			switch ( ex.Number ) {
+				case 0:
+					Console.WriteLine("[DB] Cannot connect to server. Contact administrator");
+					break;
+				case 1045:
+					Console.WriteLine("[DB] Invalid username/password, please try again");
+					break;
+				default:
+					Console.WriteLine("[DB] Exception nr: {0} | {1}", ex.Number, ex.Message);
+					break;
+			}
+
+			return id;
 		}
 
 		public void Close()
 		{
-			sql.Close();
+			mysql.Close();
+		}
+
+		public void Dispose()
+		{
+			if ( reader != null ) {
+				reader.Dispose();
+				reader = null;
+			}
+
+			if ( cmd != null ) {
+				cmd.Dispose();
+				cmd = null;
+			}
+
+			if ( mysql != null ) {
+				mysql.Dispose();
+				mysql = null;
+			}
 		}
 	}
 
 	[Serializable]
-	public class Users
+	public class User
 	{
 		public int ID;
-		public string LoginName;
+		public string Username;
 		public string Nickname;
 		public string Email;
-		public string Password;
-		public string Salt;
+		public int Type;
+		public byte[] Password;
+		public byte[] Salt;
 
-		public Users()
+		public User()
 		{
 
+		}
+
+		public User(User u)
+		{
+			this.Username = u.Username;
+			this.Email = u.Email;
+			this.Password = u.Password;
+			this.Salt = u.Salt;
+		}
+
+		public User(string login, byte[] pwd)
+		{
+			this.Username = login;
+			this.Password = pwd;
+		}
+
+		public User(string name, string mail, byte[] pwd, byte[] salt)
+		{
+			this.Username = name;
+			this.Email = mail;
+			this.Salt = salt;
+			this.Password = pwd;
+		}
+
+		private DataTable AddUserColumns(DataTable tb)
+		{
+			tb.Columns.Add("id", typeof(int));
+			tb.Columns.Add("username", typeof(string));
+			tb.Columns.Add("nickname", typeof(string));
+			tb.Columns.Add("email", typeof(string));
+			tb.Columns.Add("type", typeof(int));
+			tb.Columns.Add("pwd", typeof(byte[]));
+			tb.Columns.Add("salt", typeof(byte[]));
+
+			return tb;
+		}
+
+		public bool Login()
+		{
+			DataTable tb = new DataTable("user");
+
+			string precmd = "SELECT * FROM server.users WHERE username = @username";
+			bool result;
+
+			using ( Database db = new Database() ) {
+				using ( MySqlCommand cmd = new MySqlCommand(precmd, db.Connection) ) {
+					cmd.Parameters.Add("@username", MySqlDbType.String);
+					cmd.Parameters["@username"].Value = Username;
+
+					tb = Database.Select(cmd);
+
+					if (tb.Rows.Count <= 0) {
+						return false;
+					}
+
+					DataRow row = tb.Rows[0];
+
+					byte[] pwd = (byte[]) row["pwd"];
+					Salt = (byte[]) row["salt"];
+					result = ConfirmPassword(pwd);
+
+					if ( result ) {
+						ID = (int) row["id"];
+						Username = (string) row["username"];
+						Nickname = (string) row["nickname"];
+						Email = (string) row["email"];
+						Type = (int) row["type"];
+						Password = (byte[]) row["pwd"];
+						Salt = (byte[]) row["salt"];
+					}
+				}
+			}
+
+			return result;
+		}
+
+		public bool Register()
+		{
+			string precmd = "INSERT INTO server.users(id, username, nickname, email, pwd, salt)" +
+					"VALUES(null, @username, @username, @email, @pwd, @salt)";
+			int ret = -1;
+			using ( Database db = new Database() ) {
+				using ( MySqlCommand cmd = new MySqlCommand(precmd, db.Connection) ) {
+					cmd.Parameters.Add("@username", MySqlDbType.String);
+					cmd.Parameters.Add("@email", MySqlDbType.VarChar);
+					cmd.Parameters.Add("@pwd", MySqlDbType.VarBinary);
+					cmd.Parameters.Add("@salt", MySqlDbType.VarBinary);
+
+					cmd.Parameters["@username"].Value = Username;
+					cmd.Parameters["@email"].Value = Email;
+					cmd.Parameters["@pwd"].Value = Tools.Hash(Password, Salt);
+					cmd.Parameters["@salt"].Value = Salt;
+
+					ret = Database.Insert(cmd);
+
+					Console.WriteLine("[Register] {0}", Username);
+				}
+			}
+
+			return ret > 0;
+		}
+
+		public bool ConfirmPassword(byte[] hashedpwd)
+		{
+			byte[] pwdHash = Tools.Hash(Password, Salt);
+
+			return hashedpwd.SequenceEqual(pwdHash);
 		}
 	}
 }

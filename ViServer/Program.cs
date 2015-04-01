@@ -13,7 +13,8 @@ namespace ViServer
 	{
 		static void Main(string[] args)
 		{
-			ShowMenu();
+			//ShowMenu();
+			CreateServer();
 		}
 
 		static void ShowMenu()
@@ -199,13 +200,13 @@ namespace ViServer
 		{
 			switch ( p.type ) {
 				case PacketType.Login:
-					Login(p.sender);
+					Login(p.user);
 					break;
 				case PacketType.Disconnect:
 					CloseConnection();
 					break;
 				case PacketType.Register:
-					// Reserved
+					Register(p.user);
 					break;
 				case PacketType.SingleChat:
 					// Reserved
@@ -221,11 +222,37 @@ namespace ViServer
 			}
 		}
 
-		private void Login(string name)
+		private void Login(User u)
 		{
-			Name = name;
-			Console.WriteLine("[{0}] Logged as {1} with Guid: {2}", _id, Name, _guid);
-			clientSocket.Send(new Packet(PacketType.Login, _guid).ToBytes());
+			bool result = u.Login();
+			string msg;
+
+			if ( result ) {
+				Console.WriteLine("[{0}][Login] {1} with Guid: {2}", _id, u.Username, _guid);
+				msg = _guid;
+			}
+			else {
+				u = null;
+				msg = "error";
+			}
+			
+			clientSocket.Send(new Packet(PacketType.Login, u, msg).ToBytes());
+		}
+
+		private void Register(User user)
+		{
+			//User user = new User(u);
+			bool result = user.Register();
+
+			Packet res = new Packet(PacketType.Register);
+			if ( result ) {
+				res.message = "1You've successfully registered!";
+				res.user = user;
+			}
+			else {
+				res.message = "0Something went wrong!";
+			}
+			clientSocket.Send(res.ToBytes());
 		}
 
 		private void CloseConnection()
