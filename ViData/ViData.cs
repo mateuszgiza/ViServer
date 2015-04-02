@@ -73,7 +73,7 @@ namespace ViData
 		public static byte[] GenerateSalt()
 		{
 			RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider();
-			byte[] buff = new byte[128];
+			byte[] buff = new byte[128 / 8]; // 128 bits
 			rng.GetBytes(buff);
 
 			return buff;
@@ -109,6 +109,13 @@ namespace ViData
 		public Packet(PacketType type, string msg)
 		{
 			this.type = type;
+			this.message = msg;
+		}
+
+		public Packet(PacketType type, string sender, string msg)
+		{
+			this.type = type;
+			this.sender = sender;
 			this.message = msg;
 		}
 
