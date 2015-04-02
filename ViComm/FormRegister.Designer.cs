@@ -56,6 +56,7 @@
 			this.tb_login.Size = new System.Drawing.Size(150, 20);
 			this.tb_login.TabIndex = 1;
 			this.tb_login.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+			this.tb_login.KeyDown += new System.Windows.Forms.KeyEventHandler(this.TB_KeyDown);
 			// 
 			// label2
 			// 
@@ -75,6 +76,7 @@
 			this.tb_mail.Size = new System.Drawing.Size(150, 20);
 			this.tb_mail.TabIndex = 3;
 			this.tb_mail.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+			this.tb_mail.KeyDown += new System.Windows.Forms.KeyEventHandler(this.TB_KeyDown);
 			// 
 			// tb_repwd
 			// 
@@ -84,6 +86,7 @@
 			this.tb_repwd.TabIndex = 7;
 			this.tb_repwd.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
 			this.tb_repwd.UseSystemPasswordChar = true;
+			this.tb_repwd.KeyDown += new System.Windows.Forms.KeyEventHandler(this.TB_KeyDown);
 			// 
 			// label3
 			// 
@@ -104,6 +107,7 @@
 			this.tb_pwd.TabIndex = 5;
 			this.tb_pwd.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
 			this.tb_pwd.UseSystemPasswordChar = true;
+			this.tb_pwd.KeyDown += new System.Windows.Forms.KeyEventHandler(this.TB_KeyDown);
 			// 
 			// label4
 			// 

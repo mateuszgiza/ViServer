@@ -12,6 +12,7 @@ namespace ViComm
 	public partial class FormRegister : Form
 	{
 		private Client client;
+		private bool _registered = false;
 
 		public FormRegister()
 		{
@@ -30,12 +31,14 @@ namespace ViComm
 			string pwd = tb_pwd.Text;
 			string repwd = tb_repwd.Text;
 
-			if ( name != null && mail != null && pwd != null && repwd != null ) {
+			if ( name != "" && mail != "" && pwd != "" && repwd != "" ) {
 				if ( pwd.Equals(repwd) ) {
 					client = Client.GetInstance();
 
 					client.Connect();
 					client.Register(name, mail, Encoding.UTF8.GetBytes(pwd));
+
+					_registered = true;
 				}
 				else {
 					MessageBox.Show("You entered different passwords!", "Register");
@@ -48,7 +51,19 @@ namespace ViComm
 
 		private void FormRegister_FormClosing(object sender, FormClosingEventArgs e)
 		{
+			if ( !_registered ) {
+				client = Client.GetInstance();
+				client.forms.form_login = new FormLogin();
+				client.forms.InvokeIfRequired(() => client.forms.form_login.Show());
+			}
+		}
 
+		private void TB_KeyDown(object sender, KeyEventArgs e)
+		{
+			if ( e.KeyCode == Keys.Enter ) {
+				e.SuppressKeyPress = true;
+				button1.PerformClick();
+			}
 		}
 	}
 }

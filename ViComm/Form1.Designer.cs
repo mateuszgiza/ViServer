@@ -39,7 +39,7 @@
 			this.outputBox.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-			this.outputBox.BackColor = System.Drawing.SystemColors.InactiveCaptionText;
+			this.outputBox.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(67)))), ((int)(((byte)(78)))), ((int)(((byte)(84)))));
 			this.outputBox.BorderStyle = System.Windows.Forms.BorderStyle.None;
 			this.outputBox.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
 			this.outputBox.ForeColor = System.Drawing.SystemColors.ScrollBar;
@@ -73,6 +73,7 @@
 			// 
 			// btn_login
 			// 
+			this.btn_login.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.btn_login.Location = new System.Drawing.Point(397, 5);
 			this.btn_login.Name = "btn_login";
 			this.btn_login.Size = new System.Drawing.Size(75, 23);
@@ -96,7 +97,7 @@
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.BackColor = System.Drawing.SystemColors.InactiveCaptionText;
+			this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(67)))), ((int)(((byte)(78)))), ((int)(((byte)(84)))));
 			this.ClientSize = new System.Drawing.Size(484, 362);
 			this.Controls.Add(this.lb_nick);
 			this.Controls.Add(this.btn_login);

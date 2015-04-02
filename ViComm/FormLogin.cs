@@ -22,7 +22,7 @@ namespace ViComm
 
 		private void FormLogin_Load(object sender, EventArgs e)
 		{
-			
+
 		}
 
 		private void button1_Click(object sender, EventArgs e)
@@ -34,9 +34,12 @@ namespace ViComm
 				client = Client.GetInstance();
 
 				client.Connect();
-				client.Login(name, Encoding.UTF8.GetBytes(pwd));
 
-				_logged = true;
+				if ( client.Connected ) {
+					client.Login(name, Encoding.UTF8.GetBytes(pwd));
+
+					_logged = true;
+				}
 			}
 			else {
 				MessageBox.Show("Enter all credentials!", "Login");

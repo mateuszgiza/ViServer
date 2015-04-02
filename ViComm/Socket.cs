@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
@@ -15,6 +16,8 @@ namespace ViComm
 		private Socket socket;
 		private IPEndPoint ip;
 		private string guid;
+		private bool _connected;
+
 		public User user;
 
 		public FormHelper forms = FormHelper.GetInstance();
@@ -38,20 +41,28 @@ namespace ViComm
 		public void Connect()
 		{
 			if ( socket.Connected ) {
+				_connected = true;
 				return;
 			}
 
 			try {
 				socket.Connect(ip);
-
-				//form.log.Text = "*Connected!";
+				_connected = true;
 				rec = new Thread(Receive);
 				rec.Start();
 			}
 			catch {
+				_connected = false;
 				MessageBox.Show("Could not connect to server!", "Connecting error!");
-				//form.log.Text = "Could not connect to server!";
 				Console.WriteLine("Could not connect to server!");
+			}
+		}
+
+		public bool Connected
+		{
+			get
+			{
+				return _connected;
 			}
 		}
 
@@ -75,8 +86,6 @@ namespace ViComm
 				guid = p.message;
 				user = p.user;
 
-				//form.btn_login.Text = "Logout";
-				forms.InvokeIfRequired((value) => forms.form.btn_login.Text = value, "Logout");
 				forms.InvokeIfRequired(() => forms.form.Show());
 			}
 			else {
@@ -95,6 +104,7 @@ namespace ViComm
 		{
 			string result = p.message[0].ToString();
 			string msg = p.message.Substring(1);
+
 			// Result of registration
 			MessageBox.Show(msg, "Register");
 			if ( result == "1") {
@@ -141,7 +151,7 @@ namespace ViComm
 					LoginResult(p);
 					break;
 				case PacketType.Disconnect:
-					// Reserved
+					Disconnect(p);
 					break;
 				case PacketType.Register:
 					RegisterResult(p);
@@ -168,14 +178,35 @@ namespace ViComm
 				form.Invoke(callb, new object[] { packet });
 			}
 			else {
-				if ( form.outputBox.TextLength == 0 ) {
-					form.outputBox.AppendText(String.Format("{0}: {1}", packet.sender, packet.message));
+				if ( form.outputBox.TextLength > 0 ) {
+					form.outputBox.AppendText("\n");
+				}
+
+				string Sender;
+				if ( packet.sender == "Server" ) {
+					Sender = "*";
 				}
 				else {
-					form.outputBox.AppendText(String.Format("\n{0}: {1}", packet.sender, packet.message));
+					Sender = packet.sender + ":";
 				}
+
+				form.outputBox.AppendText(String.Format("{0} {1}", Sender, packet.message));
 				form.outputBox.ScrollToCaret();
 			}
+		}
+
+		public void Disconnect(Packet p)
+		{
+			MessageBox.Show(p.message, p.sender);
+
+			forms.form_login = new FormLogin();
+			forms.InvokeIfRequired(() => forms.form_login.Show());
+
+			if ( forms.form != null ) {
+				forms.InvokeIfRequired(() => forms.form.CloseWindow());
+			}
+
+			Disconnect();
 		}
 
 		public void Disconnect()
@@ -184,16 +215,22 @@ namespace ViComm
 				Packet p = new Packet(PacketType.Disconnect);
 				p.message = guid;
 				socket.Send(p.ToBytes());
-
-				CloseConnection();
 			}
+
+			CloseConnection();
 		}
 
 		private void CloseConnection()
 		{
-			rec.Abort();
-			rec = null;
-			socket.Close();
+			if ( rec != null ) {
+				rec.Abort();
+				rec = null;
+			}
+
+			if ( socket != null ) {
+				socket.Close();
+			}
+			
 			_Instance = null;
 		}
 	}

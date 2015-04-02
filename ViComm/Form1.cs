@@ -16,7 +16,7 @@ namespace ViComm
 		public FormLogin login;
 		public FormRegister register;
 
-		private bool logout = false;
+		private FormState state;
 
 		public Form1()
 		{
@@ -25,7 +25,7 @@ namespace ViComm
 
 		private void Form1_Load(object sender, EventArgs e)
 		{
-			logout = false;
+			state = FormState.Exit;
 
 			Connect();
 
@@ -57,11 +57,17 @@ namespace ViComm
 
 		private void btn_login_Click(object sender, EventArgs e)
 		{
-			logout = true;
+			state = FormState.Logout;
 
 			client.forms.form_login = new FormLogin();
 			client.forms.InvokeIfRequired(() => client.forms.form_login.Show());
 
+			this.Close();
+		}
+
+		public void CloseWindow()
+		{
+			state = FormState.Close;
 			this.Close();
 		}
 
@@ -80,12 +86,22 @@ namespace ViComm
 
 		private void Form1_FormClosing(object sender, FormClosingEventArgs e)
 		{
-			if (logout) {
+			if (state == FormState.Logout) {
 				Logout();
+			}
+			else if ( state == FormState.Close ) {
+				
 			}
 			else {
 				Exit();	
 			}
+		}
+
+		private enum FormState
+		{
+			Exit,
+			Close,
+			Logout
 		}
 	}
 }
