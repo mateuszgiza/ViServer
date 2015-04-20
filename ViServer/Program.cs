@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -26,7 +25,7 @@ namespace ViServer
 		{
 			ConsoleKey choice = new ConsoleKey();
 
-			while ( choice != ConsoleKey.D0 ) {
+			while (choice != ConsoleKey.D0) {
 				Console.WriteLine("--------------------------");
 				Console.WriteLine("\tViServer");
 				Console.WriteLine("--------------------------");
@@ -35,7 +34,7 @@ namespace ViServer
 				choice = Console.ReadKey().Key;
 				Console.Write("\r");
 
-				switch ( choice ) {
+				switch (choice) {
 					case ConsoleKey.D0:
 						Console.WriteLine("** Stopping server...");
 						break;
@@ -74,7 +73,7 @@ namespace ViServer
 
 		private static bool Handler(CtrlType sig)
 		{
-			switch ( sig ) {
+			switch (sig) {
 				case CtrlType.CTRL_C_EVENT:
 				case CtrlType.CTRL_LOGOFF_EVENT:
 				case CtrlType.CTRL_SHUTDOWN_EVENT:
@@ -91,7 +90,7 @@ namespace ViServer
 		#endregion
 	}
 
-	class Server
+	public class Server
 	{
 		private Socket listenerSocket;
 		private IPEndPoint ip;
@@ -114,7 +113,7 @@ namespace ViServer
 				Console.WriteLine("* Listening on {0}:{1}", ip.Address.ToString(), ip.Port);
 				Listen();
 			}
-			catch ( SocketException e ) {
+			catch (SocketException e) {
 				Console.WriteLine("|#| SocketException: {0}", e);
 			}
 
@@ -141,7 +140,7 @@ namespace ViServer
 			threads = new List<Thread>();
 
 			int id = 0;
-			while ( true ) {
+			while (true) {
 				listenerSocket.Listen(0);
 				Console.WriteLine("\n* Waiting for a connection...");
 
@@ -156,9 +155,20 @@ namespace ViServer
 				id++;
 			}
 		}
+
+		public static List<string> GetContacts()
+		{
+			List<string> contacts = new List<string>();
+
+			foreach (Client c in clients) {
+				contacts.Add(c.Name);
+			}
+
+			return contacts;
+		}
 	}
 
-	public class Client
+	public class Client : IDisposable
 	{
 		private int _id;
 		private string _guid;
@@ -197,7 +207,7 @@ namespace ViServer
 
 		public void Send(Packet p)
 		{
-			switch ( p.type ) {
+			switch (p.type) {
 				case PacketType.Login:
 					// Reserved
 					break;
@@ -225,15 +235,15 @@ namespace ViServer
 			byte[] buffer;
 			int readBytes;
 
-			while ( clientSocket != null && clientSocket.Connected ) {
+			while (clientSocket != null && clientSocket.Connected) {
 				try {
 					buffer = new byte[clientSocket.SendBufferSize];
 					readBytes = clientSocket.Receive(buffer);
 
-					if ( readBytes > 0 ) {
+					if (readBytes > 0) {
 						Packet p = new Packet(buffer);
 
-						if ( p.type != PacketType.Disconnect ) {
+						if (p.type != PacketType.Disconnect) {
 							new Task(() => Received(p)).Start();
 						}
 						else {
@@ -241,7 +251,7 @@ namespace ViServer
 						}
 					}
 				}
-				catch ( SocketException e ) {
+				catch (SocketException e) {
 					Console.WriteLine(e);
 					CloseConnection();
 				}
@@ -250,7 +260,7 @@ namespace ViServer
 
 		public void Received(Packet p)
 		{
-			switch ( p.type ) {
+			switch (p.type) {
 				case PacketType.Login:
 					Login(p.user);
 					break;
@@ -260,6 +270,11 @@ namespace ViServer
 				case PacketType.Register:
 					Register(p.user);
 					break;
+
+				case PacketType.Information:
+					InformationReceived(p);
+					break;
+
 				case PacketType.SingleChat:
 					// Reserved
 					break;
@@ -274,14 +289,14 @@ namespace ViServer
 
 		public static void MultiChat(Packet p)
 		{
-			foreach ( Client c in Server.clients ) {
+			foreach (Client c in Server.clients) {
 				c.clientSocket.Send(p.ToBytes());
 			}
 		}
 		private void MultiChatWithoutMe(Packet p)
 		{
-			foreach ( Client c in Server.clients ) {
-				if ( c != this ) {
+			foreach (Client c in Server.clients) {
+				if (c != this) {
 					c.clientSocket.Send(p.ToBytes());
 				}
 			}
@@ -292,18 +307,26 @@ namespace ViServer
 			bool result = u.Login();
 			string msg;
 
-			if ( result ) {
+			if (result) {
 				Name = u.Username;
 				Console.WriteLine("[{0}][Login] {1} with Guid: {2}", _id, Name, _guid);
-				MultiChatWithoutMe(new Packet(PacketType.MultiChat, "Server", Name + " joined!"));
 				msg = _guid;
+
+				Packet p = new Packet(PacketType.Information);
+				p.info = new Information(InformationType.Joining, Name, "joined!");
+				MultiChatWithoutMe(p);
 			}
 			else {
 				u = null;
 				msg = "error";
 			}
 
-			clientSocket.Send(new Packet(PacketType.Login, u, msg).ToBytes());
+			Packet p1 = new Packet(PacketType.Login);
+			p1.user = u;
+			p1.message = msg;
+			p1.info = new Information(InformationType.Contacts, Server.GetContacts());
+
+			clientSocket.Send(p1.ToBytes());
 		}
 
 		private void Register(User user)
@@ -312,7 +335,7 @@ namespace ViServer
 			bool result = user.Register();
 
 			Packet res = new Packet(PacketType.Register);
-			if ( result ) {
+			if (result) {
 				res.message = "1You've successfully registered!";
 				res.user = user;
 			}
@@ -322,11 +345,33 @@ namespace ViServer
 			clientSocket.Send(res.ToBytes());
 		}
 
+		private void InformationReceived(Packet p)
+		{
+			if (p.info.Type == InformationType.Writing) {
+				MultiChatWithoutMe(p);
+			}
+		}
+
 		private void CloseConnection()
 		{
 			Console.WriteLine("[{0}] User {1} disconnected!", _id, Name);
-			MultiChatWithoutMe(new Packet(PacketType.MultiChat, "Server", Name + " diconnected!"));
+
+			Packet p = new Packet(PacketType.Information);
+			p.info = new Information(InformationType.Leaving, Name, "disconnected!");
+			MultiChatWithoutMe(p);
+
+			Disconnect();
+		}
+
+		private void Disconnect()
+		{
+			Dispose();
+		}
+
+		public void Dispose()
+		{
 			clientSocket.Close();
+			clientSocket.Dispose();
 			clientSocket = null;
 			Server.clients.Remove(this);
 			this.thread.Abort();
