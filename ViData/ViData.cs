@@ -65,6 +65,19 @@ namespace ViData
 			}
 		}
 
+		public static string GetIPv4()
+		{
+			IPAddress[] ips = Dns.GetHostAddresses(Dns.GetHostName());
+
+			foreach ( IPAddress ip in ips ) {
+				if ( ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork ) {
+					return ip.ToString();
+				}
+			}
+
+			return "127.0.0.1";
+		}
+
 		public static string GetIPFromHostname(string host)
 		{
 			return Dns.GetHostAddresses(host)[0].ToString();
@@ -90,90 +103,6 @@ namespace ViData
 
 			return new SHA256Managed().ComputeHash(saltedValue);
 		}
-	}
-
-	[Serializable]
-	public class Packet
-	{
-		public PacketType type;
-		public User user;
-		public string sender;
-		public string receiver;
-		public string message;
-
-		public Packet(PacketType type)
-		{
-			this.type = type;
-		}
-
-		public Packet(PacketType type, string msg)
-		{
-			this.type = type;
-			this.message = msg;
-		}
-
-		public Packet(PacketType type, string sender, string msg)
-		{
-			this.type = type;
-			this.sender = sender;
-			this.message = msg;
-		}
-
-		public Packet(PacketType type, User u, string msg)
-		{
-			this.type = type;
-			this.user = u;
-			this.message = msg;
-		}
-
-		public Packet(byte[] buffer)
-		{
-			BinaryFormatter bin = new BinaryFormatter();
-			MemoryStream ms = new MemoryStream(buffer);
-
-			Packet p = (Packet) bin.Deserialize(ms);
-			ms.Close();
-
-			type = p.type;
-			user = p.user;
-			sender = p.sender;
-			receiver = p.receiver;
-			message = p.message;
-		}
-
-		public byte[] ToBytes()
-		{
-			BinaryFormatter bin = new BinaryFormatter();
-			MemoryStream ms = new MemoryStream();
-
-			bin.Serialize(ms, this);
-			byte[] bytes = ms.ToArray();
-			ms.Close();
-
-			return bytes;
-		}
-
-		public static string GetIPv4()
-		{
-			IPAddress[] ips = Dns.GetHostAddresses(Dns.GetHostName());
-
-			foreach ( IPAddress ip in ips ) {
-				if ( ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork ) {
-					return ip.ToString();
-				}
-			}
-
-			return "127.0.0.1";
-		}
-	}
-
-	public enum PacketType
-	{
-		MultiChat,
-		SingleChat,
-		Login,
-		Register,
-		Disconnect
 	}
 
 	public class Database : IDisposable
@@ -306,6 +235,132 @@ namespace ViData
 	}
 
 	[Serializable]
+	public class Packet
+	{
+		public PacketType type;
+		public User user;
+		public Information info;
+		public DateTime date;
+		public string sender;
+		public string receiver;
+		public string message;
+
+		public Packet(PacketType type)
+		{
+			this.type = type;
+		}
+
+		public Packet(PacketType type, string msg)
+		{
+			this.type = type;
+			this.message = msg;
+		}
+
+		public Packet(PacketType type, string sender, string msg)
+		{
+			this.type = type;
+			this.sender = sender;
+			this.message = msg;
+		}
+
+		public Packet(PacketType type, User u, string msg)
+		{
+			this.type = type;
+			this.user = u;
+			this.message = msg;
+		}
+
+		public Packet(PacketType type, Information i)
+		{
+			this.type = type;
+			this.info = i;
+		}
+
+		public Packet(byte[] buffer)
+		{
+			Packet p;
+
+			using ( MemoryStream ms = new MemoryStream(buffer) ) {
+				BinaryFormatter bin = new BinaryFormatter();
+				p = (Packet) bin.Deserialize(ms);
+			}
+
+			type = p.type;
+			user = p.user;
+			info = p.info;
+			date = p.date;
+			sender = p.sender;
+			receiver = p.receiver;
+			message = p.message;
+		}
+
+		public byte[] ToBytes()
+		{
+			byte[] bytes;
+
+			using ( MemoryStream ms = new MemoryStream() ) {
+				BinaryFormatter bin = new BinaryFormatter();
+				bin.Serialize(ms, this);
+				bytes = ms.ToArray();
+			}
+			
+			return bytes;
+		}
+	}
+
+	public enum PacketType
+	{
+		Login,
+		Register,
+		Disconnect,
+
+		Information,
+
+		MultiChat,
+		SingleChat
+	}
+
+	public enum InformationType
+	{
+		Server,
+
+		Writing,
+
+		Joining,
+		Leaving,
+		Contacts
+	}
+
+	[Serializable]
+	public class Information
+	{
+		public InformationType Type;
+		public string User;
+		public string Message;
+		public List<string> Contacts;
+
+		public Information(InformationType t, string user, string msg)
+		{
+			this.Type = t;
+			this.User = user;
+			this.Message = msg;
+		}
+		public Information(InformationType t, List<string> contacts)
+		{
+			this.Type = t;
+			this.Contacts = contacts;
+		}
+
+		public Information(Information info)
+		{
+			this.Type = info.Type;
+			this.User = info.User;
+			this.Message = info.Message;
+			this.Contacts = info.Contacts;
+		}
+	}
+
+	[Serializable]
 	public class User
 	{
 		public int ID;
@@ -370,7 +425,7 @@ namespace ViData
 
 					tb = Database.Select(cmd);
 
-					if (tb.Rows.Count <= 0) {
+					if ( tb.Rows.Count <= 0 ) {
 						return false;
 					}
 
