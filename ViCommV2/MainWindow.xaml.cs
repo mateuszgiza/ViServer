@@ -1,16 +1,16 @@
 ﻿using System;
+using System.Security.Permissions;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
-using ViData;
 
 // StickyWindow
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
-using System.Windows.Data;
-using System.Security.Permissions;
+using ViData;
 
 namespace ViCommV2
 {
@@ -29,14 +29,14 @@ namespace ViCommV2
 			set { _client = value; }
 		}
 
-		FormHelper _forms;
+		private FormHelper _forms;
 		public FormHelper Forms
 		{
 			get { return _forms; }
 			set { _forms = value; }
 		}
 
-		SettingsWindow _settings;
+		private SettingsWindow _settings;
 		public SettingsWindow Settings
 		{
 			get { return _settings; }
@@ -59,7 +59,7 @@ namespace ViCommV2
 
 		public ListBox ListContacts { get { return list_Contacts; } }
 
-		#endregion
+		#endregion Fields
 
 		public MainWindow()
 		{
@@ -303,7 +303,6 @@ namespace ViCommV2
 				Logout();
 			}
 			else if (_state == FormState.Close) {
-
 			}
 			else if (_state == FormState.Exit) {
 				Exit();
@@ -325,10 +324,11 @@ namespace ViCommV2
 			Sender
 		}
 
-		System.Windows.Threading.DispatcherTimer t_writing;
+		private System.Windows.Threading.DispatcherTimer t_writing;
 		private double timeElapsed = 0;
 		private bool tStarted = false;
 		private bool enterPressed = false;
+
 		private void inputBox_TextChanged(object sender, TextChangedEventArgs e)
 		{
 			if (enterPressed == false) {
@@ -348,7 +348,7 @@ namespace ViCommV2
 			}
 		}
 
-		void t_writing_Tick(object sender, EventArgs e)
+		private void t_writing_Tick(object sender, EventArgs e)
 		{
 			if ((timeElapsed >= 1000) || enterPressed) {
 				t_writing.Stop();

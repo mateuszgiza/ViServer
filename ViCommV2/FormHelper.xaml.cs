@@ -24,6 +24,7 @@ namespace ViCommV2
 		}
 
 		private static FormHelper _Instance = null;
+
 		public static FormHelper GetInstance()
 		{
 			if (_Instance == null) {
@@ -69,7 +70,7 @@ namespace ViCommV2
 			set { _settingsManager = value; }
 		}
 
-		#endregion
+		#endregion Fields
 	}
 
 	public class Sound

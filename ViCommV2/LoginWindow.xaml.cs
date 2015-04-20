@@ -29,7 +29,7 @@ namespace ViCommV2
 
 		private void PasswordBox_KeyDown(object sender, KeyEventArgs e)
 		{
-			if ( e.Key == Key.Enter ) {
+			if (e.Key == Key.Enter) {
 				Login();
 			}
 		}
@@ -41,24 +41,24 @@ namespace ViCommV2
 
 		private void Login()
 		{
-			if ( tb_login.Text != "" && tb_pwd.Password != "" ) {
+			if (tb_login.Text != "" && tb_pwd.Password != "") {
 				client = ClientManager.GetInstance();
 
 				client.Connect();
 
-				if ( client.Connected ) {
+				if (client.Connected) {
 					client.Login(tb_login.Text, Encoding.UTF8.GetBytes(tb_pwd.Password));
 
 					state = FormState.Logging;
 				}
 			}
 			else {
-				if ( tb_login.Text == "" ) {
+				if (tb_login.Text == "") {
 					tb_login.BorderBrush = Brushes.OrangeRed;
 					tb_login.BorderThickness = new Thickness(2);
 				}
 
-				if ( tb_pwd.Password == "" ) {
+				if (tb_pwd.Password == "") {
 					tb_pwd.BorderBrush = Brushes.OrangeRed;
 					tb_pwd.BorderThickness = new Thickness(2);
 				}
@@ -67,8 +67,8 @@ namespace ViCommV2
 
 		private void tb_login_TextChanged(object sender, TextChangedEventArgs e)
 		{
-			if ( tb_login.Text != "" ) {
-				tb_login.BorderBrush = new SolidColorBrush((Color) ColorConverter.ConvertFromString("#FFE3E9EF"));
+			if (tb_login.Text != "") {
+				tb_login.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFE3E9EF"));
 				tb_login.BorderThickness = new Thickness(1);
 			}
 			else {
@@ -79,8 +79,8 @@ namespace ViCommV2
 
 		private void tb_pwd_PasswordChanged(object sender, RoutedEventArgs e)
 		{
-			if ( tb_pwd.Password != "" ) {
-				tb_pwd.BorderBrush = new SolidColorBrush((Color) ColorConverter.ConvertFromString("#FFE3E9EF"));
+			if (tb_pwd.Password != "") {
+				tb_pwd.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFE3E9EF"));
 				tb_pwd.BorderThickness = new Thickness(1);
 			}
 			else {
@@ -98,7 +98,7 @@ namespace ViCommV2
 
 		private void Window_Closing(object sender, CancelEventArgs e)
 		{
-			if ( state == FormState.Null ) {
+			if (state == FormState.Null) {
 				FormHelper.isClosing = true;
 				System.Environment.Exit(0);
 			}

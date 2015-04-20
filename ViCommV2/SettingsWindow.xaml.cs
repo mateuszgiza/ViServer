@@ -1,14 +1,14 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Drawing;
+using System.IO;
+using System.Runtime.CompilerServices;
+using System.Security.Permissions;
 using System.Windows;
 using System.Windows.Forms;
-using Media = System.Windows.Media;
-using System.Runtime.CompilerServices;
-using System.IO;
-using ViData;
 using System.Xml;
-using System.Security.Permissions;
+using ViData;
+using Media = System.Windows.Media;
 
 namespace ViCommV2
 {
@@ -18,8 +18,8 @@ namespace ViCommV2
 	[SecurityPermission(SecurityAction.Demand, Flags = SecurityPermissionFlag.ControlAppDomain)]
 	public partial class SettingsWindow : Window
 	{
-		SettingsProvider manager;
-		Settings settings;
+		private SettingsProvider manager;
+		private Settings settings;
 
 		public SettingsWindow()
 		{
@@ -251,6 +251,7 @@ namespace ViCommV2
 		}
 
 		private bool _disposed = false;
+
 		protected virtual void Dispose(bool disposing)
 		{
 			if (_disposed)
@@ -265,15 +266,16 @@ namespace ViCommV2
 
 			_disposed = true;
 		}
-		
-		#endregion
+
+		#endregion Dispose Implementation
 	}
 
-	public class SettingsProvider: IDisposable
+	public class SettingsProvider : IDisposable
 	{
 		public Settings settings;
 
 		private static SettingsProvider _Instance = null;
+
 		public static SettingsProvider GetInstance()
 		{
 			if (_Instance == null) {
@@ -448,6 +450,7 @@ namespace ViCommV2
 		}
 
 		private bool _disposed = false;
+
 		protected virtual void Dispose(bool disposing)
 		{
 			if (_disposed)
@@ -461,8 +464,8 @@ namespace ViCommV2
 
 			_disposed = true;
 		}
-		
-		#endregion
+
+		#endregion Dispose Implementation
 	}
 
 	[Serializable]
@@ -477,13 +480,12 @@ namespace ViCommV2
 				PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
 			}
 		}
-
 	}
 }
 
 namespace System.Runtime.CompilerServices
 {
-	sealed class CallerMemberNameAttribute : Attribute
+	internal sealed class CallerMemberNameAttribute : Attribute
 	{
 	}
 }

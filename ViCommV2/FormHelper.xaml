@@ -1,9 +1,8 @@
 ﻿<Window x:Class="ViCommV2.FormHelper"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="FormHelper" Height="100" Width="100" ResizeMode="NoResize" ShowInTaskbar="False" WindowState="Minimized" 
+        Title="FormHelper" Height="100" Width="100" ResizeMode="NoResize" ShowInTaskbar="False" WindowState="Minimized"
         IsEnabled="False" Visibility="Hidden" WindowStyle="ToolWindow">
-    <Grid>
-
-    </Grid>
+	<Grid>
+	</Grid>
 </Window>

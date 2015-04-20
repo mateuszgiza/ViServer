@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Documents;
-using System.Windows.Media;
 
 namespace ViCommV2
 {
@@ -19,17 +16,17 @@ namespace ViCommV2
 			int lastPos = 0;
 			int insertedUrlChars = 0;
 
-			foreach ( string word in text.Split(new char[] { ' ', '\n', '\r' }).ToList() ) {
+			foreach (string word in text.Split(new char[] { ' ', '\n', '\r' }).ToList()) {
 				TextPointer position = p.ContentStart;
 
-				if ( IsHyperlink(word) ) {
+				if (IsHyperlink(word)) {
 					Uri uri = new Uri(word, UriKind.RelativeOrAbsolute);
 
-					if ( !uri.IsAbsoluteUri ) {
+					if (!uri.IsAbsoluteUri) {
 						uri = new Uri(@"http://" + word, UriKind.Absolute);
 					}
 
-					if ( uri != null ) {
+					if (uri != null) {
 						int index = text.IndexOf(word, lastPos) + insertedUrlChars + 1;
 						int indexEnd = index + word.Length;
 
@@ -42,7 +39,7 @@ namespace ViCommV2
 							NavigateUri = uri,
 						};
 						link.Click += link_Click;
-						
+
 						range.ApplyPropertyValue(TextElement.ForegroundProperty, BrushExtension.FromARGB("#FF0066CC"));
 
 						lastPos = index;
@@ -52,24 +49,24 @@ namespace ViCommV2
 			}
 		}
 
-		static void link_Click(object sender, System.Windows.RoutedEventArgs e)
+		private static void link_Click(object sender, System.Windows.RoutedEventArgs e)
 		{
-			Process.Start(( sender as Hyperlink ).NavigateUri.AbsoluteUri);
+			Process.Start((sender as Hyperlink).NavigateUri.AbsoluteUri);
 		}
 
 		public static bool IsHyperlink(string word)
 		{
 			// First check to make sure the word has at least one of the characters we need to make a hyperlink
-			if ( word.IndexOfAny(@":.\/".ToCharArray()) != -1 ) {
-				if ( UrlRegex.IsMatch(word) ) {
+			if (word.IndexOfAny(@":.\/".ToCharArray()) != -1) {
+				if (UrlRegex.IsMatch(word)) {
 					Uri uri = new Uri(word, UriKind.RelativeOrAbsolute);
 
-					if ( !uri.IsAbsoluteUri ) {
+					if (!uri.IsAbsoluteUri) {
 						// rebuild it it with http to turn it into an Absolute URI
 						uri = new Uri(@"http://" + word, UriKind.Absolute);
 					}
 
-					if ( uri.IsAbsoluteUri ) {
+					if (uri.IsAbsoluteUri) {
 						return true;
 					}
 				}

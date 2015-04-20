@@ -1,14 +1,13 @@
 ﻿using System;
 using System.Net;
 using System.Net.Sockets;
-using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using ViData;
 
 namespace ViCommV2
 {
-	public class ClientManager: IDisposable
+	public class ClientManager : IDisposable
 	{
 		private Socket socket;
 		private IPEndPoint ip;
@@ -20,6 +19,7 @@ namespace ViCommV2
 		public FormHelper forms = FormHelper.GetInstance();
 
 		private static ClientManager _Instance = null;
+
 		public static ClientManager GetInstance()
 		{
 			if (_Instance == null) {
@@ -105,6 +105,7 @@ namespace ViCommV2
 
 			Send(p);
 		}
+
 		public void RegisterResult(Packet p)
 		{
 			string result = p.message[0].ToString();
@@ -145,6 +146,7 @@ namespace ViCommV2
 		}
 
 		private byte[] buffer;
+
 		public void StartReceiving()
 		{
 			FormHelper.isClosing = false;
@@ -347,6 +349,7 @@ namespace ViCommV2
 		}
 
 		private bool _disposed = false;
+
 		protected virtual void Dispose(bool disposing)
 		{
 			if (_disposed)
@@ -360,7 +363,7 @@ namespace ViCommV2
 
 			_disposed = true;
 		}
-		
-		#endregion
+
+		#endregion Dispose Implementation
 	}
 }

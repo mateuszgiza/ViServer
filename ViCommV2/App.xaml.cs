@@ -24,18 +24,18 @@ namespace ViCommV2
 			App.Current.Run(new FormHelper());
 		}
 
-		void Current_DispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
+		private void Current_DispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
 		{
 			HandleException(e.Exception);
 			e.Handled = true;
 		}
 
-		void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
+		private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
 		{
 			HandleException((Exception)e.ExceptionObject);
 		}
 
-		void Dispatcher_UnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
+		private void Dispatcher_UnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
 		{
 			HandleException(e.Exception);
 			e.Handled = true;

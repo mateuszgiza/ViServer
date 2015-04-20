@@ -5,13 +5,12 @@
 	<Grid>
 		<Grid.Background>
 			<RadialGradientBrush>
-				<GradientStop Color="#FF645A64"/>
-				<GradientStop Color="#FF434E54" Offset="1"/>
+				<GradientStop Color="#FF645A64" />
+				<GradientStop Color="#FF434E54" Offset="1" />
 			</RadialGradientBrush>
 		</Grid.Background>
 
-		<Label Content="Login:" HorizontalAlignment="Left" VerticalAlignment="Top" Foreground="LightGray" FontSize="14" Margin="10,10,0,0"/>
-		<TextBox HorizontalAlignment="Left" Height="33" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Width="120" Margin="62,10,0,0"/>
-
+		<Label Content="Login:" HorizontalAlignment="Left" VerticalAlignment="Top" Foreground="LightGray" FontSize="14" Margin="10,10,0,0" />
+		<TextBox HorizontalAlignment="Left" Height="33" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Width="120" Margin="62,10,0,0" />
 	</Grid>
 </Window>
