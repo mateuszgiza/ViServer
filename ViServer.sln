@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ViComm", "ViComm\ViComm.csp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ViData", "ViData\ViData.csproj", "{9AB6FFE1-0720-4A17-91BE-01F8F6095465}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ViCommV2", "ViCommV2\ViCommV2.csproj", "{1259F71D-3E99-424E-B23B-63F63F14C837}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{9AB6FFE1-0720-4A17-91BE-01F8F6095465}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9AB6FFE1-0720-4A17-91BE-01F8F6095465}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9AB6FFE1-0720-4A17-91BE-01F8F6095465}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1259F71D-3E99-424E-B23B-63F63F14C837}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1259F71D-3E99-424E-B23B-63F63F14C837}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1259F71D-3E99-424E-B23B-63F63F14C837}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1259F71D-3E99-424E-B23B-63F63F14C837}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

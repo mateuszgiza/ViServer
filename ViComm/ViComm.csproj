@@ -34,6 +34,8 @@
     <UseVSHostingProcess>false</UseVSHostingProcess>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -44,8 +46,15 @@
     <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
+    <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ChatBox.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ChatBox.Designer.cs">
+      <DependentUpon>ChatBox.cs</DependentUpon>
+    </Compile>
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -73,6 +82,14 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Socket.cs" />
+    <Compile Include="ViResource.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>ViResource.resx</DependentUpon>
+    </Compile>
+    <EmbeddedResource Include="ChatBox.resx">
+      <DependentUpon>ChatBox.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>
     </EmbeddedResource>
@@ -95,6 +112,10 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
+    <EmbeddedResource Include="ViResource.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>ViResource.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
     <None Include="app.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
@@ -105,12 +126,18 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
+    <EmbeddedResource Include="Resources\Fonts\segoeui.ttf" />
+    <EmbeddedResource Include="Resources\Fonts\segoeuil.ttf" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ViData\ViData.csproj">
       <Project>{9ab6ffe1-0720-4a17-91be-01f8f6095465}</Project>
       <Name>ViData</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Resources\Sound\s_available.wav" />
+    <Content Include="Resources\Sound\s_message.wav" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
