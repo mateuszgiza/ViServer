@@ -13,7 +13,7 @@ namespace ViComm
 	{
 		private Client client;
 
-		private bool _logged = false;
+		public bool _logged = false;
 
 		public FormLogin()
 		{
@@ -22,11 +22,13 @@ namespace ViComm
 
 		private void FormLogin_Load(object sender, EventArgs e)
 		{
-
+			_logged = false;
 		}
 
 		private void button1_Click(object sender, EventArgs e)
 		{
+			_logged = false;
+
 			string name = tb_login.Text;
 			string pwd = tb_pwd.Text;
 
@@ -48,7 +50,7 @@ namespace ViComm
 
 		private void FormLogin_FormClosing(object sender, FormClosingEventArgs e)
 		{
-			if ( !_logged ) {
+			if ( _logged == false ) {
 				Application.Exit();
 			}
 		}

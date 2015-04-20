@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using ViData;
 
@@ -86,6 +88,9 @@ namespace ViComm
 				guid = p.message;
 				user = p.user;
 
+				string[] contacts = p.info.Contacts.ToArray();
+
+				forms.InvokeIfRequired((value) => forms.form.list_contacts.Items.AddRange(value), contacts);
 				forms.InvokeIfRequired(() => forms.form.Show());
 			}
 			else {
@@ -107,8 +112,9 @@ namespace ViComm
 
 			// Result of registration
 			MessageBox.Show(msg, "Register");
-			if ( result == "1") {
+			if ( result == "1" ) {
 				Login(p.user.Username, p.user.Password);
+				forms.InvokeIfRequired((value) => forms.form_register._registered = value, true);
 				forms.InvokeIfRequired(() => forms.form_register.Close());
 			}
 		}
@@ -119,6 +125,11 @@ namespace ViComm
 			p.sender = user.Nickname;
 			p.message = msg;
 
+			socket.Send(p.ToBytes());
+		}
+
+		public void Send(Packet p)
+		{
 			socket.Send(p.ToBytes());
 		}
 
@@ -156,6 +167,11 @@ namespace ViComm
 				case PacketType.Register:
 					RegisterResult(p);
 					break;
+
+				case PacketType.Information:
+					Information(p);
+					break;
+
 				case PacketType.SingleChat:
 					// Reserved
 					break;
@@ -168,30 +184,87 @@ namespace ViComm
 			}
 		}
 
+		private void Information(Packet p)
+		{
+			Form1 form = forms.form;
+
+			if ( p.info.Type == InformationType.Joining ) {
+				AddItemToListBox(forms.form.list_contacts, p.info.User);
+				AppendText(p);
+			}
+			else if ( p.info.Type == InformationType.Leaving ) {
+				RemoveItemFromListBox(forms.form.list_contacts, p.info.User);
+				AppendText(p);
+			}
+			else if ( p.info.Type == InformationType.Writing ) {
+				if ( p.info.Message == "started" ) {
+					ChangeItemInListBox(forms.form.list_contacts, p.info.User, "[*]" + p.info.User);
+				}
+				else {
+					ChangeItemInListBox(forms.form.list_contacts, "[*]" + p.info.User, p.info.User);
+				}
+			}
+		}
+
+		public void AddItemToListBox(ListBox list, object o)
+		{
+			forms.InvokeIfRequired((value) => list.Items.Add(value), o);
+		}
+
+		public void RemoveItemFromListBox(ListBox list, object o)
+		{
+			if ( list.Items.Contains(o) ) {
+				forms.InvokeIfRequired((value) => list.Items.Remove(value), o);
+			}
+		}
+
+		public void ChangeItemInListBox(ListBox list, object o, object changed)
+		{
+			if ( list.Items.Contains(o) ) {
+				int i = list.Items.IndexOf(o);
+				forms.InvokeIfRequired((value) => list.Items[i] = value, changed);
+			}
+		}
+
 		public delegate void SetTextCallback(Packet p);
 		private void AppendText(Packet packet)
 		{
 			Form1 form = forms.form;
+			Sound sound = new Sound();
 
-			if ( form.outputBox.InvokeRequired ) {
+			if ( form.chatBox1.InvokeRequired ) {
 				SetTextCallback callb = new SetTextCallback(AppendText);
 				form.Invoke(callb, new object[] { packet });
 			}
 			else {
-				if ( form.outputBox.TextLength > 0 ) {
-					form.outputBox.AppendText("\n");
-				}
+				string format;
+				string sender;
+				string msg;
 
-				string Sender;
-				if ( packet.sender == "Server" ) {
-					Sender = "*";
+				if ( packet.type == PacketType.Information ) {
+					format = "{0} {1}";
+					sender = "*";
+					msg = packet.info.User + " " + packet.info.Message;
+
+					sound.Play(Sound.SoundType.Available);
 				}
 				else {
-					Sender = packet.sender + ":";
+					format = "{0}: {1}";
+					sender = packet.sender;
+					msg = packet.message;
+
+					if ( sender != user.Nickname ) {
+						sound.Play(Sound.SoundType.Message);
+						form.chatBox1.backColor = Color.FromArgb(50, Color.Black);
+					}
+					else {
+						form.chatBox1.backColor = Color.FromArgb(50, Color.Gray);
+					}
 				}
 
-				form.outputBox.AppendText(String.Format("{0} {1}", Sender, packet.message));
-				form.outputBox.ScrollToCaret();
+				form.chatBox1.Add(String.Format(format, sender, msg));
+				form.chatBox1.ScrollToCarret();
+				form.chatBox1.backColor = Color.Transparent;
 			}
 		}
 
@@ -203,18 +276,21 @@ namespace ViComm
 			forms.InvokeIfRequired(() => forms.form_login.Show());
 
 			if ( forms.form != null ) {
+				forms.InvokeIfRequired((value) => forms.form.state = value, ViComm.Form1.FormState.Logout);
 				forms.InvokeIfRequired(() => forms.form.CloseWindow());
 			}
 
-			Disconnect();
+			Disconnect(true);
 		}
 
-		public void Disconnect()
+		public void Disconnect(bool server)
 		{
-			if ( socket.Connected ) {
-				Packet p = new Packet(PacketType.Disconnect);
-				p.message = guid;
-				socket.Send(p.ToBytes());
+			if ( server == false ) {
+				if ( socket.Connected ) {
+					Packet p = new Packet(PacketType.Disconnect);
+					p.message = guid;
+					socket.Send(p.ToBytes());
+				}
 			}
 
 			CloseConnection();
@@ -228,9 +304,10 @@ namespace ViComm
 			}
 
 			if ( socket != null ) {
-				socket.Close();
+				socket.Dispose();
+				socket = null;
 			}
-			
+
 			_Instance = null;
 		}
 	}
