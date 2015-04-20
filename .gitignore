@@ -191,3 +191,15 @@ UpgradeLog*.htm
 # Microsoft Fakes
 FakesAssemblies/
 
+libs/StickyWindow/StickyWindow.dll
+libs/NAudio/readme.txt
+libs/NAudio/license.txt
+libs/NAudio/NAudio.xml
+libs/NAudio/NAudio.dll
+libs/NAudio/NAudio.WindowsMediaFormat.dll
+Resources/Sounds.zip
+Resources/FavSound.wav
+Resources/PressHold.wav
+Resources/StartRecording.wav
+Resources/StopRecording.wav
+ViCommV2/Mahm0udwally-All-Flat-Chat.ico
