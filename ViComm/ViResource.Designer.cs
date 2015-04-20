@@ -77,25 +77,5 @@ namespace ViComm {
                 return ResourceManager.GetStream("s_message", resourceCulture);
             }
         }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Byte[].
-        /// </summary>
-        internal static byte[] segoeui {
-            get {
-                object obj = ResourceManager.GetObject("segoeui", resourceCulture);
-                return ((byte[])(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Byte[].
-        /// </summary>
-        internal static byte[] segoeuil {
-            get {
-                object obj = ResourceManager.GetObject("segoeuil", resourceCulture);
-                return ((byte[])(obj));
-            }
-        }
     }
 }

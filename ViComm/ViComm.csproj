@@ -126,8 +126,6 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
-    <EmbeddedResource Include="Resources\Fonts\segoeui.ttf" />
-    <EmbeddedResource Include="Resources\Fonts\segoeuil.ttf" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ViData\ViData.csproj">
@@ -138,6 +136,9 @@
   <ItemGroup>
     <Content Include="Resources\Sound\s_available.wav" />
     <Content Include="Resources\Sound\s_message.wav" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Resources\Fonts\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
