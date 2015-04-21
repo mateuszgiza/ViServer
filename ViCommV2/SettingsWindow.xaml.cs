@@ -65,9 +65,20 @@ namespace ViCommV2
 			};
 		}
 
-		private void bt_Load_Click(object sender, RoutedEventArgs e)
+		private void bt_Load_Click(object sender, RoutedEventArgs ex)
 		{
-			manager.LoadSettings();
+			OpenFileDialog dialog = new OpenFileDialog();
+			dialog.AddExtension = true;
+			dialog.Multiselect = false;
+			dialog.CheckFileExists = true;
+			dialog.SupportMultiDottedExtensions = true;
+			dialog.InitialDirectory = Tools.GetStartupPath();
+			dialog.Title = "Choose Settings file";
+			dialog.Filter = "Settings Files (*.xml)|*.xml";
+			dialog.FilterIndex = 1;
+
+			dialog.FileOk += (s, e) => { manager.LoadSettings(dialog.FileName); };
+			dialog.ShowDialog();
 		}
 
 		private void bt_Save_Click(object sender, RoutedEventArgs e)
@@ -294,7 +305,7 @@ namespace ViCommV2
 			LoadSettings();
 		}
 
-		public void Load()
+		public void LoadDefault()
 		{
 			settings.MessageFont = new Font("Segoe UI", 12);
 			settings.MessageForeground = Media.Brushes.LightGray;
@@ -309,7 +320,11 @@ namespace ViCommV2
 		public void LoadSettings()
 		{
 			string path = Tools.GetStartupPath() + @"\settings.xml";
+			LoadSettings(path);
+		}
 
+		public void LoadSettings(string path)
+		{
 			if (File.Exists(path)) {
 				ReadXML(path);
 			}
