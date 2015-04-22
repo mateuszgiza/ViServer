@@ -65,7 +65,7 @@ namespace ViCommV2
 		{
 			InitializeComponent();
 
-			this.DataContext = SettingsProvider.GetInstance().settings;
+			this.DataContext = SettingsProvider.Instance.settings;
 		}
 
 		private void Initialize()
@@ -78,7 +78,7 @@ namespace ViCommV2
 		{
 			Initialize();
 
-			_forms = FormHelper.GetInstance();
+			_forms = FormHelper.Instance;
 			Connect();
 
 			// Display user nickname

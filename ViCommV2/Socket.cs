@@ -16,7 +16,7 @@ namespace ViCommV2
 
 		public User user;
 
-		public FormHelper forms = FormHelper.GetInstance();
+		public FormHelper forms = FormHelper.Instance;
 
 		private static ClientManager _Instance = null;
 

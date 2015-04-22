@@ -15,32 +15,31 @@ namespace ViCommV2
 		public FormHelper()
 		{
 			InitializeComponent();
-			_Instance = this;
+			_instance = this;
 
-			_settingsManager = SettingsProvider.GetInstance();
+			_settingsManager = SettingsProvider.Instance;
 
 			_login = new LoginWindow();
 			_login.Show();
 		}
 
-		private static FormHelper _Instance = null;
+		private static FormHelper _instance = null;
 
-		public static FormHelper GetInstance()
+		public static FormHelper Instance
 		{
-			if (_Instance == null) {
-				_Instance = new FormHelper();
-			}
+			get
+			{
+				if (_instance == null) {
+					_instance = new FormHelper();
+				}
 
-			return _Instance;
+				return _instance;
+			}
 		}
 
 		#region Fields
 
-		public static bool isClosing
-		{
-			get;
-			set;
-		}
+		public static bool isClosing { get; set; }
 
 		private MainWindow _main;
 		public MainWindow Main
