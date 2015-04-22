@@ -16,10 +16,12 @@ namespace ViCommV2
 		public App()
 			: base()
 		{
+#if !DEBUG
 			App.Current.DispatcherUnhandledException += Current_DispatcherUnhandledException;
 			Application.Current.DispatcherUnhandledException += Current_DispatcherUnhandledException;
 			App.Current.Dispatcher.UnhandledException += Dispatcher_UnhandledException;
 			AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
+#endif
 
 			App.Current.Run(new FormHelper());
 		}
