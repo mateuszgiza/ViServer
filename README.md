@@ -4,22 +4,20 @@ In order to increase my programming experience I've started to create my first s
 
 ### ViServer ###
 
-* Listening for clients
-* When client is joining then create new object to manage his actions
-* 2 Threads per client
+* Managing clients
+* Receiving messages
+* Sending messages
 
 ### ViClient ###
 
 * GUI Application
-* Connecting with server on app startup
-* Login with name to server
-* Individual thread for receiving
+* Connecting with server
+* Receiving and sending messages
 
 ### ViData ###
 
-* There's Packet structure with serializing
-* Tools which can help a lot at client and server side
-* Database connection for future clients managing (ie. registration, login)
+* Packet structure
+* Database connection for registering and logging in
 
 ### Note ###
 
