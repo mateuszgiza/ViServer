@@ -4,7 +4,7 @@
         xmlns:local="clr-namespace:ViCommV2"
         xmlns:System="clr-namespace:System;assembly=mscorlib" x:Class="ViCommV2.MainWindow"
         Title="ViComm | " Height="350" Width="500" MinHeight="350" MinWidth="500" Background="Transparent"
-        Loaded="Window_Loaded" Closing="Window_Closing" WindowStartupLocation="CenterScreen" ResizeMode="CanResizeWithGrip" WindowStyle="None" MouseDown="Grid_MouseDown" AllowsTransparency="True">
+        Loaded="Window_Loaded" Closing="Window_Closing" WindowStartupLocation="CenterScreen" ResizeMode="CanResizeWithGrip" WindowStyle="None" MouseDown="Grid_MouseDown" AllowsTransparency="True" Topmost="{Binding AlwaysOnTop}">
 
 	<Window.DataContext>
 		<local:Settings />
