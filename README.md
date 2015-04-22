@@ -1,16 +1,16 @@
 # ViChat #
 
-In order to increase my programming experience I've started to create my first server&client app what became ViChat. Now when it's working I'm planning to develop it so that I'll get much more experience.
+Multithreaded chat server and user-friendly (GUI) client application writed in WPF with a lot of settings.
 
 ### ViServer ###
 
 * Managing clients
-* Receiving messages
-* Sending messages
+* Receiving and sending messages for each client
+* Multithreading
 
-### ViClient ###
+### ViComm ###
 
-* GUI Application
+* GUI Application (WPF)
 * Connecting with server
 * Receiving and sending messages
 
