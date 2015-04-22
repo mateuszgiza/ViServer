@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 		xmlns:local="clr-namespace:ViCommV2"
 		xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
-        Title="Ustawienia" Height="350" Width="500" MinHeight="350" MinWidth="500" Background="{Binding BackgroundColor}" WindowStyle="ToolWindow" ResizeMode="NoResize" ShowInTaskbar="False" WindowStartupLocation="CenterOwner">
+        Title="Ustawienia" Height="350" Width="500" MinHeight="350" MinWidth="500" Background="{Binding BackgroundColor}" WindowStyle="ToolWindow" ResizeMode="NoResize" ShowInTaskbar="False" WindowStartupLocation="CenterOwner" Closing="Window_Closing" Topmost="{Binding AlwaysOnTop}">
 	<Window.DataContext>
 		<local:Settings />
 	</Window.DataContext>
@@ -12,7 +12,20 @@
 		<TabControl Margin="0,0,0,30" Background="Transparent">
 			<TabItem Header="Ogólne">
 				<Grid>
-					<CheckBox Content="Uruchamiaj z systemem" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,10,0,0" Foreground="LightGray" FlowDirection="RightToLeft" Padding="20,0,0,0" />
+
+					<BulletDecorator HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,10,0,0" FlowDirection="RightToLeft">
+						<BulletDecorator.Bullet>
+							<CheckBox x:Name="cb_RunOnStartup" IsChecked="{Binding RunOnStartup}" />
+						</BulletDecorator.Bullet>
+						<Label Content="Uruchamiaj z systemem" Foreground="LightGray" Padding="20,5,5,5" />
+					</BulletDecorator>
+
+					<BulletDecorator HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,41,0,0" FlowDirection="RightToLeft">
+						<BulletDecorator.Bullet>
+							<CheckBox x:Name="cb_AlwaysOnTop" IsChecked="{Binding AlwaysOnTop}" />
+						</BulletDecorator.Bullet>
+						<Label Content="Zawsze na wierzchu" Foreground="LightGray" Padding="20,5,5,5" />
+					</BulletDecorator>
 				</Grid>
 			</TabItem>
 			<TabItem Header="Czcionka">

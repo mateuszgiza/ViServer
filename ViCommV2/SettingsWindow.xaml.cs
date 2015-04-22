@@ -23,7 +23,7 @@ namespace ViCommV2
 
 		public SettingsWindow()
 		{
-			manager = FormHelper.GetInstance().SettingsManager;
+			manager = FormHelper.Instance.SettingsManager;
 			settings = new Settings();
 
 			InitializeComponent();
@@ -36,6 +36,8 @@ namespace ViCommV2
 
 		private void Buttons_Clicks()
 		{
+			#region Font Buttons
+
 			bt_MessageFont.Click += (sender, e) => {
 				FontDialog dialog = new FontDialog();
 				dialog.Font = settings.MessageFont;
@@ -63,33 +65,33 @@ namespace ViCommV2
 					System.Windows.MessageBox.Show(ex.Message, "Error");
 				}
 			};
+
+			#endregion Font Buttons
 		}
 
 		private void bt_Load_Click(object sender, RoutedEventArgs ex)
 		{
-			OpenFileDialog dialog = new OpenFileDialog();
-			dialog.AddExtension = true;
-			dialog.Multiselect = false;
-			dialog.CheckFileExists = true;
-			dialog.SupportMultiDottedExtensions = true;
-			dialog.InitialDirectory = Tools.GetStartupPath();
-			dialog.Title = "Choose Settings file";
-			dialog.Filter = "Settings Files (*.xml)|*.xml";
-			dialog.FilterIndex = 1;
+			using (OpenFileDialog dialog = new OpenFileDialog()) {
+				dialog.AddExtension = true;
+				dialog.Multiselect = false;
+				dialog.CheckFileExists = true;
+				dialog.SupportMultiDottedExtensions = true;
+				dialog.InitialDirectory = Tools.GetStartupPath();
+				dialog.Title = "Choose Settings file";
+				dialog.Filter = "Settings Files (*.xml)|*.xml";
+				dialog.FilterIndex = 1;
 
-			dialog.FileOk += (s, e) => { manager.LoadSettings(dialog.FileName); };
-			dialog.ShowDialog();
+				dialog.FileOk += (s, e) => { manager.LoadSettings(dialog.FileName); };
+				dialog.ShowDialog();
+			}
 		}
 
 		private void bt_Save_Click(object sender, RoutedEventArgs e)
 		{
-			manager.SaveSettings();
+			manager.SaveSettings(manager.currentFile);
 		}
 
-		private void bt_Close_Click(object sender, RoutedEventArgs e)
-		{
-			this.Close();
-		}
+		#region Color Pickers Changed events
 
 		private void ClrPcker_Background_SelectedColorChanged(object sender, RoutedPropertyChangedEventArgs<Media.Color> e)
 		{
@@ -132,17 +134,65 @@ namespace ViCommV2
 				settings.DateForeground = new Media.SolidColorBrush(ClrPcker_DateForeground.SelectedColor);
 			}
 		}
+
+		#endregion Color Pickers Changed events
+
+		private void bt_Close_Click(object sender, RoutedEventArgs e)
+		{
+			this.Close();
+		}
+
+		private void Window_Closing(object sender, CancelEventArgs e)
+		{
+			manager.SaveSettings(manager.currentFile);
+		}
 	}
 
 	public class Settings : ViewModelBase, IDisposable
 	{
+		#region General
+
+		// The path to the key where Windows looks for startup applications
+		private Microsoft.Win32.RegistryKey regStartup = Microsoft.Win32.Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true);
+
+		private bool _runOnStartup = false;
+		public bool RunOnStartup
+		{
+			get { return _runOnStartup; }
+			set
+			{
+				_runOnStartup = value;
+
+				if (_runOnStartup) {
+					regStartup.SetValue("ViComm", Tools.GetStartupPath());
+				}
+				else {
+					regStartup.DeleteValue("ViComm", false);
+				}
+
+				NotifyPropertyChanged();
+			}
+		}
+
+		private bool _alwaysOnTop = false;
+		public bool AlwaysOnTop
+		{
+			get { return _alwaysOnTop; }
+			set
+			{
+				_alwaysOnTop = value;
+				NotifyPropertyChanged();
+			}
+		}
+
+		#endregion General
+
+		#region Fonts
+
 		private Font _messageFont = new Font("Segoe UI", 12);
 		public Font MessageFont
 		{
-			get
-			{
-				return this._messageFont;
-			}
+			get { return this._messageFont; }
 			set
 			{
 				this._messageFont = value;
@@ -153,10 +203,7 @@ namespace ViCommV2
 		private Font _dateFont = new Font("Segoe UI", 9);
 		public Font DateFont
 		{
-			get
-			{
-				return this._dateFont;
-			}
+			get { return this._dateFont; }
 			set
 			{
 				this._dateFont = value;
@@ -164,13 +211,14 @@ namespace ViCommV2
 			}
 		}
 
+		#endregion Fonts
+
+		#region Colors
+
 		private Media.SolidColorBrush _messageForeground = Media.Brushes.LightGray;
 		public Media.SolidColorBrush MessageForeground
 		{
-			get
-			{
-				return this._messageForeground;
-			}
+			get { return this._messageForeground; }
 			set
 			{
 				this._messageForeground = value;
@@ -181,10 +229,7 @@ namespace ViCommV2
 		private Media.SolidColorBrush _dateForeground = BrushExtension.FromARGB("#87000000");
 		public Media.SolidColorBrush DateForeground
 		{
-			get
-			{
-				return this._dateForeground;
-			}
+			get { return this._dateForeground; }
 			set
 			{
 				this._dateForeground = value;
@@ -195,10 +240,7 @@ namespace ViCommV2
 		private Media.SolidColorBrush _bgColor = Media.Brushes.DarkSlateGray;
 		public Media.SolidColorBrush BackgroundColor
 		{
-			get
-			{
-				return this._bgColor;
-			}
+			get { return this._bgColor; }
 			set
 			{
 				this._bgColor = value;
@@ -209,10 +251,7 @@ namespace ViCommV2
 		private Media.SolidColorBrush _borderColor = (Media.SolidColorBrush)new Media.BrushConverter().ConvertFrom("#FF436363");
 		public Media.SolidColorBrush BorderColor
 		{
-			get
-			{
-				return this._borderColor;
-			}
+			get { return this._borderColor; }
 			set
 			{
 				this._borderColor = value;
@@ -223,10 +262,7 @@ namespace ViCommV2
 		private Media.SolidColorBrush _rowUserColor = Media.Brushes.CadetBlue;
 		public Media.SolidColorBrush RowUserColor
 		{
-			get
-			{
-				return this._rowUserColor;
-			}
+			get { return this._rowUserColor; }
 			set
 			{
 				this._rowUserColor = value;
@@ -237,16 +273,15 @@ namespace ViCommV2
 		private Media.SolidColorBrush _rowSenderColor = Media.Brushes.MediumSeaGreen;
 		public Media.SolidColorBrush RowSenderColor
 		{
-			get
-			{
-				return this._rowSenderColor;
-			}
+			get { return this._rowSenderColor; }
 			set
 			{
 				this._rowSenderColor = value;
 				NotifyPropertyChanged();
 			}
 		}
+
+		#endregion Colors
 
 		#region Dispose Implementation
 
@@ -284,32 +319,40 @@ namespace ViCommV2
 	public class SettingsProvider : IDisposable
 	{
 		public Settings settings;
+		public String currentFile = Tools.GetStartupPath() + @"\settings.xml";
 
-		private static SettingsProvider _Instance = null;
+		private static SettingsProvider _instance = null;
 
-		public static SettingsProvider GetInstance()
+		public static SettingsProvider Instance
 		{
-			if (_Instance == null) {
-				_Instance = new SettingsProvider();
-			}
+			get
+			{
+				if (_instance == null) {
+					_instance = new SettingsProvider();
+				}
 
-			return _Instance;
+				return _instance;
+			}
 		}
 
 		private SettingsProvider()
 		{
 			settings = new Settings();
-
-			//Load();
-
 			LoadSettings();
 		}
 
 		public void LoadDefault()
 		{
+			// General
+			settings.RunOnStartup = false;
+			settings.AlwaysOnTop = false;
+
+			// Fonts
 			settings.MessageFont = new Font("Segoe UI", 12);
-			settings.MessageForeground = Media.Brushes.LightGray;
 			settings.DateFont = new Font("Segoe UI", 9);
+
+			// Colors
+			settings.MessageForeground = Media.Brushes.LightGray;
 			settings.DateForeground = Media.Brushes.CadetBlue;
 			settings.BackgroundColor = Media.Brushes.DarkSlateGray;
 			settings.BorderColor = (Media.SolidColorBrush)new Media.BrushConverter().ConvertFrom("#FF436363");
@@ -319,24 +362,24 @@ namespace ViCommV2
 
 		public void LoadSettings()
 		{
-			string path = Tools.GetStartupPath() + @"\settings.xml";
+			string path = currentFile;
 			LoadSettings(path);
 		}
 
 		public void LoadSettings(string path)
 		{
+			currentFile = path;
+
 			if (File.Exists(path)) {
 				ReadXML(path);
 			}
 			else {
-				SaveSettings();
+				SaveSettings(path);
 			}
 		}
 
-		public void SaveSettings()
+		public void SaveSettings(string path)
 		{
-			string path = Tools.GetStartupPath() + @"\settings.xml";
-
 			XmlWriterSettings xmlWriterSettings = new XmlWriterSettings() {
 				Indent = true,
 				IndentChars = "\t",
@@ -347,6 +390,31 @@ namespace ViCommV2
 				writer.WriteStartDocument();
 				writer.WriteStartElement("Settings");
 
+				// General
+				writer.WriteStartElement("RunOnStartup");
+				writer.WriteAttributeString("Value", settings.RunOnStartup.ToString());
+				writer.WriteEndElement();
+
+				writer.WriteStartElement("AlwaysOnTop");
+				writer.WriteAttributeString("Value", settings.AlwaysOnTop.ToString());
+				writer.WriteEndElement();
+
+				// Message Font
+				writer.WriteStartElement("MessageFont");
+				writer.WriteAttributeString("FontFamily", settings.MessageFont.Name);
+				writer.WriteAttributeString("FontSize", settings.MessageFont.Size.ToString());
+				writer.WriteAttributeString("FontStyle", settings.MessageFont.Style.ToString());
+				writer.WriteAttributeString("MessageForeground", settings.MessageForeground.ToARGB());
+				writer.WriteEndElement();
+
+				// Message Font
+				writer.WriteStartElement("DateFont");
+				writer.WriteAttributeString("FontFamily", settings.DateFont.Name);
+				writer.WriteAttributeString("FontSize", settings.DateFont.Size.ToString());
+				writer.WriteAttributeString("FontStyle", settings.DateFont.Style.ToString());
+				writer.WriteAttributeString("DateForeground", settings.DateForeground.ToARGB());
+				writer.WriteEndElement();
+
 				// Background Color
 				writer.WriteStartElement("BackgroundColor");
 				writer.WriteAttributeString("Value", settings.BackgroundColor.ToARGB());
@@ -355,22 +423,6 @@ namespace ViCommV2
 				// Border Color
 				writer.WriteStartElement("BorderColor");
 				writer.WriteAttributeString("Value", settings.BorderColor.ToARGB());
-				writer.WriteEndElement();
-
-				// Message Font
-				writer.WriteStartElement("MessageFont");
-				writer.WriteAttributeString("FontFamily", settings.MessageFont.Name.ToString());
-				writer.WriteAttributeString("FontSize", settings.MessageFont.Size.ToString());
-				writer.WriteAttributeString("FontStyle", settings.MessageFont.Style.ToString());
-				writer.WriteAttributeString("MessageForeground", settings.MessageForeground.ToARGB());
-				writer.WriteEndElement();
-
-				// Message Font
-				writer.WriteStartElement("DateFont");
-				writer.WriteAttributeString("FontFamily", settings.DateFont.Name.ToString());
-				writer.WriteAttributeString("FontSize", settings.DateFont.Size.ToString());
-				writer.WriteAttributeString("FontStyle", settings.DateFont.Style.ToString());
-				writer.WriteAttributeString("DateForeground", settings.DateForeground.ToARGB());
 				writer.WriteEndElement();
 
 				// Row User Color
@@ -392,56 +444,72 @@ namespace ViCommV2
 
 		private void ReadXML(string path)
 		{
+			bool bValue;
 			string color;
 			string foreground;
 			string fontFamily;
 			float fontSize;
 			System.Drawing.FontStyle fontStyle;
 
+			LoadDefault();
+
 			using (XmlReader reader = XmlReader.Create(path)) {
 				while (reader.Read()) {
 					if (reader.IsStartElement()) {
 						switch (reader.Name) {
-							case "BackgroundColor":
-								color = reader["Value"];
-
-								settings.BackgroundColor = BrushExtension.FromARGB(color);
+							// General
+							case "RunOnStartup":
+								bValue = reader.GetAttribute("Value").ToBoolean() ?? false;
+								settings.RunOnStartup = bValue;
 								break;
 
-							case "BorderColor":
-								color = reader["Value"];
-
-								settings.BorderColor = BrushExtension.FromARGB(color);
+							case "AlwaysOnTop":
+								bValue = reader.GetAttribute("Value").ToBoolean() ?? false;
+								settings.AlwaysOnTop = bValue;
 								break;
 
+							// Fonts
 							case "MessageFont":
-								fontFamily = reader["FontFamily"];
-								fontSize = reader["FontSize"].ToFloat();
-								fontStyle = Extensions.ParseEnum<System.Drawing.FontStyle>(reader["FontStyle"]);
-								foreground = reader["MessageForeground"];
+								fontFamily = reader.GetAttribute("FontFamily") ?? "Segoe UI";
+								fontSize = reader.GetAttribute("FontSize").ToFloat() ?? 12;
+								fontStyle = Extensions.ParseEnum<System.Drawing.FontStyle>(reader.GetAttribute("FontStyle") ?? "Regular");
+								foreground = reader.GetAttribute("MessageForeground") ?? "#FFD3D3D3";
 
 								settings.MessageFont = new Font(fontFamily, fontSize, fontStyle);
 								settings.MessageForeground = BrushExtension.FromARGB(foreground);
 								break;
 
 							case "DateFont":
-								fontFamily = reader["FontFamily"];
-								fontSize = reader["FontSize"].ToFloat();
-								fontStyle = Extensions.ParseEnum<System.Drawing.FontStyle>(reader["FontStyle"]);
-								foreground = reader["DateForeground"];
+								fontFamily = reader.GetAttribute("FontFamily") ?? "Segoe UI";
+								fontSize = reader.GetAttribute("FontSize").ToFloat() ?? 9;
+								fontStyle = Extensions.ParseEnum<System.Drawing.FontStyle>(reader.GetAttribute("FontStyle") ?? "Regular");
+								foreground = reader.GetAttribute("DateForeground") ?? "#87000000";
 
 								settings.DateFont = new Font(fontFamily, fontSize, fontStyle);
 								settings.DateForeground = BrushExtension.FromARGB(foreground);
 								break;
 
+							// Colors
+							case "BackgroundColor":
+								color = reader.GetAttribute("Value") ?? "#FF2F4F4F";
+
+								settings.BackgroundColor = BrushExtension.FromARGB(color);
+								break;
+
+							case "BorderColor":
+								color = reader.GetAttribute("Value") ?? "#FF436363";
+
+								settings.BorderColor = BrushExtension.FromARGB(color);
+								break;
+
 							case "RowUserColor":
-								color = reader["Value"];
+								color = reader.GetAttribute("Value") ?? "#FF5F9EA0";
 
 								settings.RowUserColor = BrushExtension.FromARGB(color);
 								break;
 
 							case "RowSenderColor":
-								color = reader["Value"];
+								color = reader.GetAttribute("Value") ?? "#FF3CB371";
 
 								settings.RowSenderColor = BrushExtension.FromARGB(color);
 								break;
