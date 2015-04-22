@@ -11,9 +11,24 @@ namespace ViCommV2
 			return (T)Enum.Parse(typeof(T), value, true);
 		}
 
-		public static float ToFloat(this string s)
+		public static Nullable<float> ToFloat(this string s)
 		{
-			return float.Parse(s, CultureInfo.InvariantCulture.NumberFormat);
+			Nullable<float> temp = null;
+			if (s != null && s != String.Empty) {
+				temp = float.Parse(s, CultureInfo.InvariantCulture.NumberFormat);
+			}
+
+			return temp;
+		}
+
+		public static Nullable<bool> ToBoolean(this string s)
+		{
+			Nullable<bool> temp = null;
+			if (s != null && s != String.Empty) {
+				temp = bool.Parse(s);
+			}
+
+			return temp;
 		}
 	}
 
