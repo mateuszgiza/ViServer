@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Security.Permissions;
+﻿using System.Security.Permissions;
 using System.Windows;
-using System.Windows.Media;
 
 namespace ViCommV2
 {
@@ -70,34 +67,5 @@ namespace ViCommV2
 		}
 
 		#endregion Fields
-	}
-
-	public class Sound
-	{
-		private static Dictionary<SoundType, MediaPlayer> Sounds = new Dictionary<SoundType, MediaPlayer>();
-		private MediaPlayer s;
-
-		public static void AddSound(SoundType key, Uri path)
-		{
-			if (Sounds.ContainsKey(key) == false) {
-				MediaPlayer p = new MediaPlayer();
-				p.Open(path);
-				Sounds.Add(key, p);
-			}
-		}
-
-		public void Play(SoundType type)
-		{
-			s = Sounds[type];
-
-			s.Stop();
-			s.Play();
-		}
-
-		public enum SoundType
-		{
-			Available,
-			Message
-		}
 	}
 }
