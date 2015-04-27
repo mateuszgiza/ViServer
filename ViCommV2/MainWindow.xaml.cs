@@ -72,6 +72,8 @@ namespace ViCommV2
 		{
 			Sound.AddSound(Sound.SoundType.Available, new Uri(@"Resources\Sounds\mp3_available.mp3", UriKind.Relative));
 			Sound.AddSound(Sound.SoundType.Message, new Uri(@"Resources\Sounds\mp3_message.mp3", UriKind.Relative));
+
+			Emoticons.ReadXML();
 		}
 
 		private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -119,7 +121,7 @@ namespace ViCommV2
 				return;
 			}
 
-			_client = ClientManager.GetInstance();
+			_client = ClientManager.Instance;
 			_client.Connect();
 		}
 
@@ -145,7 +147,7 @@ namespace ViCommV2
 			Paragraph txt = new Paragraph(text) {
 				Margin = new Thickness(1)
 			};
-			txt.DetectURL();
+			txt.DetectEmoticonsAndURL();
 			txt.SetBinding(Run.ForegroundProperty, new Binding("MessageForeground"));
 
 			Paragraph dT = new Paragraph(date) {
@@ -208,7 +210,8 @@ namespace ViCommV2
 			//Run name = new Run(sender + ": ");
 			Run text = new Run(sender + ": " + msg);
 
-			this.chatBox.Document.Blocks.Add(Message(date, text, rowType));
+			chatBox.Document.Blocks.Add(Message(date, text, rowType));
+			chatBox.CenterText();
 			chatBox.ScrollToEnd();
 		}
 
@@ -221,7 +224,7 @@ namespace ViCommV2
 
 			p.DetectURL();
 
-			this.chatBox.Document.Blocks.Add(p);
+			chatBox.Document.Blocks.Add(p);
 			chatBox.ScrollToEnd();
 		}
 
@@ -378,11 +381,22 @@ namespace ViCommV2
 			(sender as Button).ContextMenu.IsOpen = true;
 		}
 
+		private void bt_emoticons_Click(object sender, RoutedEventArgs e)
+		{
+			emoticonsContainer.Visibility = System.Windows.Visibility.Visible;
+			emoticonsContainer.Focus();
+		}
+
 		private void Grid_MouseDown(object sender, MouseButtonEventArgs e)
 		{
 			if (e.ChangedButton == MouseButton.Left) {
 				this.DragMove();
 			}
+		}
+
+		private void emoticonsContainer_LostFocus(object sender, RoutedEventArgs e)
+		{
+			emoticonsContainer.Visibility = System.Windows.Visibility.Hidden;
 		}
 	}
 }

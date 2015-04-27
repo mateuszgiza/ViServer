@@ -49,7 +49,7 @@ namespace ViCommV2
 			}
 		}
 
-		private static void link_Click(object sender, System.Windows.RoutedEventArgs e)
+		public static void link_Click(object sender, System.Windows.RoutedEventArgs e)
 		{
 			Process.Start((sender as Hyperlink).NavigateUri.AbsoluteUri);
 		}

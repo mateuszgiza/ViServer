@@ -42,7 +42,7 @@ namespace ViCommV2
 		private void Login()
 		{
 			if (tb_login.Text != "" && tb_pwd.Password != "") {
-				client = ClientManager.GetInstance();
+				client = ClientManager.Instance;
 
 				client.Connect();
 

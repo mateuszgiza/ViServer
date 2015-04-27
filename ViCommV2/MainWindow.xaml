@@ -17,6 +17,18 @@
 				<ScrollViewer x:Name="PART_ContentHost" />
 			</Border>
 		</ControlTemplate>
+
+		<Style x:Key="emoticonHover" TargetType="{x:Type Image}">
+			<Style.Triggers>
+				<Trigger Property="IsMouseOver" Value="True">
+					<Setter Property="Effect">
+						<Setter.Value>
+							<DropShadowEffect ShadowDepth="0" Color="Blue" Opacity="1" BlurRadius="15" />
+						</Setter.Value>
+					</Setter>
+				</Trigger>
+			</Style.Triggers>
+		</Style>
 	</Window.Resources>
 
 	<Border Background="{Binding BackgroundColor}" CornerRadius="10,10,2,10" Padding="0,20,0,0" BorderThickness="1" BorderBrush="{Binding BorderColor}">
@@ -24,9 +36,16 @@
 
 			<Rectangle VerticalAlignment="Stretch" Width="1" Margin="140,10,0,10" Stroke="{Binding BorderColor}" HorizontalAlignment="Left" />
 
-			<TextBox x:Name="inputBox" Template="{StaticResource ControlTemplate}" Height="40" TextWrapping="Wrap" Text=""
+			<TextBox x:Name="inputBox" Template="{StaticResource ControlTemplate}" Height="40" TextWrapping="Wrap"
 			Margin="145,0,10,10" VerticalAlignment="Bottom" Opacity="0.8" BorderBrush="Gray" PreviewKeyDown="inputBox_PreviewKeyDown"
-			AcceptsReturn="True" VerticalScrollBarVisibility="Auto" TextChanged="inputBox_TextChanged" />
+			AcceptsReturn="True" VerticalScrollBarVisibility="Auto" TextChanged="inputBox_TextChanged" Padding="5,5,30,5">
+			</TextBox>
+
+			<Button HorizontalAlignment="Right" Margin="0,0,15,15" VerticalAlignment="Bottom" Width="25" Height="30" ContextMenuService.Placement="Top" Click="bt_emoticons_Click" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}" Content="{DynamicResource image}">
+				<Button.Resources>
+					<Image x:Key="image" Source="Resources\Images\flat_smile.png" Opacity="0.5" />
+				</Button.Resources>
+			</Button>
 
 			<RichTextBox x:Name="chatBox" Margin="140,10,10,50" VerticalScrollBarVisibility="Auto"
 			Padding="0,0,0,0" Background="Transparent" Foreground="LightGray" IsReadOnly="True" IsReadOnlyCaretVisible="False"
@@ -41,11 +60,11 @@
 						<Setter Property="Foreground" Value="LightGray" />
 					</Style>
 
-					<Style TargetType="TableRow" x:Key="RowUser">
+					<Style TargetType="{x:Type TableRow}" x:Key="RowUser">
 						<Setter Property="Background" Value="{Binding RowUserColor}" />
 					</Style>
 
-					<Style TargetType="TableRow" x:Key="RowSender">
+					<Style TargetType="{x:Type TableRow}" x:Key="RowSender">
 						<Setter Property="Background" Value="{Binding RowSenderColor}" />
 					</Style>
 				</RichTextBox.Resources>
@@ -59,8 +78,7 @@
 						<MenuItem Command="Copy" />
 					</ContextMenu>
 				</RichTextBox.ContextMenu>
-				<FlowDocument>
-				</FlowDocument>
+				<FlowDocument />
 			</RichTextBox>
 			<Label Content="Kontakty:" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,10,0,0" Width="125" Foreground="LightGray" FontFamily="Segoe UI" FontSize="14" Padding="0,5,5,5" />
 			<ListBox x:Name="list_Contacts" x:FieldModifier="private" HorizontalAlignment="Left" Width="125"
@@ -81,11 +99,11 @@
 			<Button x:Name="bt_menu" Content="Menu" HorizontalAlignment="Left" VerticalAlignment="Top" Width="56" Margin="10,-17,0,0" Height="25" Click="bt_menu_Click" ContextMenuService.Placement="Bottom">
 				<Button.ContextMenu>
 					<ContextMenu>
-						<MenuItem Header="Wyczyść"  Click="CM_Clear_Click" />
+						<MenuItem Header="Wyczyść" Click="CM_Clear_Click" />
 						<Separator />
 						<MenuItem Header="Ustawienia" Click="CM_Settings_Click" />
 						<Separator />
-						<MenuItem Header="Wyloguj"  Click="CM_Logout_Click" />
+						<MenuItem Header="Wyloguj" Click="CM_Logout_Click" />
 						<MenuItem Header="Wyjdź" Click="CM_Exit_Click" />
 					</ContextMenu>
 				</Button.ContextMenu>
@@ -99,6 +117,23 @@
 					</ContextMenu>
 				</Label.ContextMenu>
 			</Label>
+			<ScrollViewer x:Name="emoticonsContainer" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,10,50" Width="250" Height="200" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" LostFocus="emoticonsContainer_LostFocus"  Visibility="Hidden">
+				<ScrollViewer.Clip>
+					<RectangleGeometry Rect="0,0,250,200" RadiusX="5" RadiusY="5" />
+				</ScrollViewer.Clip>
+				<Grid x:Name="grid_emoticons">
+					<Grid.Background>
+						<SolidColorBrush Color="White" Opacity="0.75" />
+					</Grid.Background>
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition />
+						<ColumnDefinition />
+						<ColumnDefinition />
+						<ColumnDefinition />
+						<ColumnDefinition />
+					</Grid.ColumnDefinitions>
+				</Grid>
+			</ScrollViewer>
 		</Grid>
 	</Border>
 </Window>
