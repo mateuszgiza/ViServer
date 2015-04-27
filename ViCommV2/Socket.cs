@@ -18,15 +18,17 @@ namespace ViCommV2
 
 		public FormHelper forms = FormHelper.Instance;
 
-		private static ClientManager _Instance = null;
-
-		public static ClientManager GetInstance()
+		private static ClientManager _instance = null;
+		public static ClientManager Instance
 		{
-			if (_Instance == null) {
-				_Instance = new ClientManager(Tools.GetIP(), 5555);
-			}
+			get
+			{
+				if (_instance == null) {
+					_instance = new ClientManager(Tools.GetIP(), 5555);
+				}
 
-			return _Instance;
+				return _instance;
+			}
 		}
 
 		public ClientManager(string host, int port)
@@ -332,7 +334,7 @@ namespace ViCommV2
 				socket.Close();
 			}
 
-			_Instance = null;
+			_instance = null;
 		}
 
 		#region Dispose Implementation
