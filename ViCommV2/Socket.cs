@@ -127,6 +127,7 @@ namespace ViCommV2
 		public void Send(String msg)
 		{
 			Packet p = new Packet(PacketType.MultiChat);
+			p.user = new User(user.AvatarURI, user.NickColor);
 			p.date = DateTime.Now;
 			p.sender = user.Nickname;
 			p.message = msg;
@@ -269,23 +270,16 @@ namespace ViCommV2
 				MainWindow main = forms.Main;
 				Sound sound = new Sound();
 
-				string sender;
-				string msg;
-				DateTime date = DateTime.Now;
-
 				if (packet.type == PacketType.Information) {
 					sound.Play(Sound.SoundType.Available);
 
-					msg = packet.info.User + " " + packet.info.Message;
+					string msg = packet.info.User + " " + packet.info.Message;
 					main.AppendInfoText(String.Format("* {0}", msg));
 				}
 				else {
-					sender = packet.sender;
-					msg = packet.message;
-					date = packet.date.ToLocalTime();
 					MainWindow.RowType rowType;
 
-					if (sender != user.Nickname) {
+					if (packet.sender != user.Nickname) {
 						rowType = MainWindow.RowType.Sender;
 						sound.Play(Sound.SoundType.Message);
 					}
@@ -293,7 +287,7 @@ namespace ViCommV2
 						rowType = MainWindow.RowType.User;
 					}
 
-					main.AppendText(sender, msg, date, rowType);
+					main.AppendText(packet, rowType);
 				}
 			}));
 		}
