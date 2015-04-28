@@ -1,0 +1,65 @@
+﻿<Window x:Class="ViCommV2.NotifyWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+		xmlns:local="clr-namespace:ViCommV2"
+        Title="NotifyWindow" Height="75" Width="250" ResizeMode="NoResize" WindowStyle="None" AllowsTransparency="True" Background="Transparent" Closing="Window_Closing" MouseLeftButtonDown="Window_MouseLeftButtonDown" Topmost="True" ShowInTaskbar="False" Cursor="Hand">
+
+	<Window.DataContext>
+		<local:Settings />
+	</Window.DataContext>
+
+	<Window.Resources>
+
+		<Style x:Key="NoChromeButton" TargetType="{x:Type Button}">
+			<Setter Property="Background" Value="Transparent" />
+			<Setter Property="BorderThickness" Value="1" />
+			<Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" />
+			<Setter Property="HorizontalContentAlignment" Value="Center" />
+			<Setter Property="VerticalContentAlignment" Value="Center" />
+			<Setter Property="Padding" Value="1" />
+			<Setter Property="Template">
+				<Setter.Value>
+					<ControlTemplate TargetType="{x:Type Button}">
+						<Grid x:Name="Chrome" Background="{TemplateBinding Background}" SnapsToDevicePixels="true">
+							<ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" Margin="{TemplateBinding Padding}" RecognizesAccessKey="True" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+						</Grid>
+						<ControlTemplate.Triggers>
+							<Trigger Property="IsEnabled" Value="false">
+								<Setter Property="Foreground" Value="#ADADAD" />
+								<Setter Property="Opacity" TargetName="Chrome" Value="0.5" />
+							</Trigger>
+						</ControlTemplate.Triggers>
+					</ControlTemplate>
+				</Setter.Value>
+			</Setter>
+		</Style>
+
+		<Style x:Key="topButtonsHover" TargetType="{x:Type Image}">
+			<Style.Triggers>
+				<Trigger Property="IsMouseOver" Value="True">
+					<Setter Property="Effect">
+						<Setter.Value>
+							<DropShadowEffect ShadowDepth="0" Color="Black" Opacity="0.5" BlurRadius="5" />
+						</Setter.Value>
+					</Setter>
+				</Trigger>
+			</Style.Triggers>
+		</Style>
+	</Window.Resources>
+
+	<Border BorderThickness="1" BorderBrush="{Binding BorderColor}" CornerRadius="20" Background="{Binding RowSenderColor}">
+		<Grid>
+			<Button Style="{DynamicResource NoChromeButton}" Click="Exit_Click" HorizontalAlignment="Right" Margin="0,7,7,0" VerticalAlignment="Top" Width="15" Height="15">
+				<Image Style="{StaticResource topButtonsHover}" Source="Resources\Images\close.png" Opacity="0.5" RenderOptions.BitmapScalingMode="HighQuality" />
+			</Button>
+			<Image x:Name="img_avatar" Margin="15,20,0,0" HorizontalAlignment="Left" Height="32" VerticalAlignment="Top" Width="32">
+				<Image.Clip>
+					<RectangleGeometry Rect="0,0,32,32" RadiusX="10" RadiusY="10" />
+				</Image.Clip>
+			</Image>
+			<Border Margin="55,20,20,20" MaxWidth="175" MaxHeight="35">
+				<TextBlock x:Name="tb_text" VerticalAlignment="Center" FontFamily="{Binding MessageFont.Name}" FontSize="{Binding MessageFont.Size}" Foreground="{Binding MessageForeground}" TextTrimming="CharacterEllipsis" />
+			</Border>
+		</Grid>
+	</Border>
+</Window>

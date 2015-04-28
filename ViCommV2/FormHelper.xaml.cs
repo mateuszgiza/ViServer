@@ -66,6 +66,19 @@ namespace ViCommV2
 			set { _settingsManager = value; }
 		}
 
+		private NotifyWindow _notifyWindow;
+		public NotifyWindow Notify
+		{
+			get
+			{
+				if (_notifyWindow == null) {
+					_notifyWindow = new NotifyWindow();
+				}
+				return _notifyWindow;
+			}
+			set { _notifyWindow = value; }
+		}
+
 		#endregion Fields
 	}
 }
