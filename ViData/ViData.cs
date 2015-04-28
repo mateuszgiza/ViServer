@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.IO;
-using System.Net;
 using System.Data;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.Cryptography;
-
+using System.Text;
 using MySql.Data.MySqlClient;
 
 namespace ViData
@@ -16,7 +15,6 @@ namespace ViData
 	{
 		private Tools()
 		{
-
 		}
 
 		public static string GetStartupPath()
@@ -32,7 +30,7 @@ namespace ViData
 		public static void CreateFile(string file, string line)
 		{
 			string path = GetStartupPath() + @"\" + file;
-			if ( !File.Exists(path) ) {
+			if (!File.Exists(path)) {
 				File.Create(path).Dispose();
 				TextWriter tw = new StreamWriter(path);
 				tw.WriteLine(line);
@@ -44,7 +42,7 @@ namespace ViData
 		{
 			string line = "";
 			string path = GetStartupPath() + @"\" + file;
-			if ( File.Exists(path) ) {
+			if (File.Exists(path)) {
 				StreamReader f = new StreamReader(path);
 				line = f.ReadLine();
 				f.Close();
@@ -57,11 +55,11 @@ namespace ViData
 		{
 			string ip = ReadLineTxt("ip.txt");
 
-			if ( ip.Length > 0 ) {
+			if (ip.Length > 0) {
 				return ip;
 			}
 			else {
-				return ( GetIPFromHostname("viserver.noip.pl") );
+				return (GetIPFromHostname("viserver.noip.pl"));
 			}
 		}
 
@@ -69,8 +67,8 @@ namespace ViData
 		{
 			IPAddress[] ips = Dns.GetHostAddresses(Dns.GetHostName());
 
-			foreach ( IPAddress ip in ips ) {
-				if ( ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork ) {
+			foreach (IPAddress ip in ips) {
+				if (ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork) {
 					return ip.ToString();
 				}
 			}
@@ -107,9 +105,9 @@ namespace ViData
 
 	public class Database : IDisposable
 	{
-		MySqlConnection mysql;
-		MySqlCommand cmd;
-		MySqlDataReader reader;
+		private MySqlConnection mysql;
+		private MySqlCommand cmd;
+		private MySqlDataReader reader;
 		//MySqlDataAdapter adapter;
 
 		public string Query;
@@ -125,7 +123,7 @@ namespace ViData
 			mysql.ConnectionString = "server=127.0.0.1;uid=ViServer;" +
 							"pwd=lubiemaslo;database=server;Charset=utf8;";
 
-			if ( start )
+			if (start)
 				Connect();
 		}
 
@@ -134,7 +132,7 @@ namespace ViData
 			try {
 				mysql.Open();
 			}
-			catch ( MySqlException ex ) {
+			catch (MySqlException ex) {
 				Exception(ex);
 			}
 		}
@@ -152,9 +150,9 @@ namespace ViData
 			DataTable tb = new DataTable();
 			MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
 
-			using ( cmd ) {
+			using (cmd) {
 				try {
-					if ( cmd.Connection.State == ConnectionState.Closed ) {
+					if (cmd.Connection.State == ConnectionState.Closed) {
 						cmd.Connection.Open();
 					}
 
@@ -162,7 +160,7 @@ namespace ViData
 
 					cmd.Connection.Close();
 				}
-				catch ( MySqlException ex ) {
+				catch (MySqlException ex) {
 					Exception(ex);
 				}
 			}
@@ -173,9 +171,9 @@ namespace ViData
 		public static int Insert(MySqlCommand cmd)
 		{
 			int ret = -1;
-			using ( cmd ) {
+			using (cmd) {
 				try {
-					if ( cmd.Connection.State == ConnectionState.Closed ) {
+					if (cmd.Connection.State == ConnectionState.Closed) {
 						cmd.Connection.Open();
 					}
 
@@ -183,7 +181,7 @@ namespace ViData
 
 					cmd.Connection.Close();
 				}
-				catch ( MySqlException ex ) {
+				catch (MySqlException ex) {
 					Exception(ex);
 				}
 			}
@@ -195,13 +193,15 @@ namespace ViData
 		{
 			int id = -1;
 
-			switch ( ex.Number ) {
+			switch (ex.Number) {
 				case 0:
 					Console.WriteLine("[DB] Cannot connect to server. Contact administrator");
 					break;
+
 				case 1045:
 					Console.WriteLine("[DB] Invalid username/password, please try again");
 					break;
+
 				default:
 					Console.WriteLine("[DB] Exception nr: {0} | {1}", ex.Number, ex.Message);
 					break;
@@ -217,17 +217,17 @@ namespace ViData
 
 		public void Dispose()
 		{
-			if ( reader != null ) {
+			if (reader != null) {
 				reader.Dispose();
 				reader = null;
 			}
 
-			if ( cmd != null ) {
+			if (cmd != null) {
 				cmd.Dispose();
 				cmd = null;
 			}
 
-			if ( mysql != null ) {
+			if (mysql != null) {
 				mysql.Dispose();
 				mysql = null;
 			}
@@ -280,9 +280,9 @@ namespace ViData
 		{
 			Packet p;
 
-			using ( MemoryStream ms = new MemoryStream(buffer) ) {
+			using (MemoryStream ms = new MemoryStream(buffer)) {
 				BinaryFormatter bin = new BinaryFormatter();
-				p = (Packet) bin.Deserialize(ms);
+				p = (Packet)bin.Deserialize(ms);
 			}
 
 			type = p.type;
@@ -298,12 +298,12 @@ namespace ViData
 		{
 			byte[] bytes;
 
-			using ( MemoryStream ms = new MemoryStream() ) {
+			using (MemoryStream ms = new MemoryStream()) {
 				BinaryFormatter bin = new BinaryFormatter();
 				bin.Serialize(ms, this);
 				bytes = ms.ToArray();
 			}
-			
+
 			return bytes;
 		}
 	}
@@ -345,6 +345,7 @@ namespace ViData
 			this.User = user;
 			this.Message = msg;
 		}
+
 		public Information(InformationType t, List<string> contacts)
 		{
 			this.Type = t;
@@ -370,10 +371,11 @@ namespace ViData
 		public int Type;
 		public byte[] Password;
 		public byte[] Salt;
+		public string AvatarURI;
+		public string NickColor;
 
 		public User()
 		{
-
 		}
 
 		public User(User u)
@@ -398,6 +400,12 @@ namespace ViData
 			this.Password = pwd;
 		}
 
+		public User(string avatarURI, string nickColor)
+		{
+			this.AvatarURI = avatarURI;
+			this.NickColor = nickColor;
+		}
+
 		private DataTable AddUserColumns(DataTable tb)
 		{
 			tb.Columns.Add("id", typeof(int));
@@ -418,31 +426,33 @@ namespace ViData
 			string precmd = "SELECT * FROM server.users WHERE username = @username";
 			bool result;
 
-			using ( Database db = new Database() ) {
-				using ( MySqlCommand cmd = new MySqlCommand(precmd, db.Connection) ) {
+			using (Database db = new Database()) {
+				using (MySqlCommand cmd = new MySqlCommand(precmd, db.Connection)) {
 					cmd.Parameters.Add("@username", MySqlDbType.String);
 					cmd.Parameters["@username"].Value = Username;
 
 					tb = Database.Select(cmd);
 
-					if ( tb.Rows.Count <= 0 ) {
+					if (tb.Rows.Count <= 0) {
 						return false;
 					}
 
 					DataRow row = tb.Rows[0];
 
-					byte[] pwd = (byte[]) row["pwd"];
-					Salt = (byte[]) row["salt"];
+					byte[] pwd = (byte[])row["pwd"];
+					Salt = (byte[])row["salt"];
 					result = ConfirmPassword(pwd);
 
-					if ( result ) {
-						ID = (int) row["id"];
-						Username = (string) row["username"];
-						Nickname = (string) row["nickname"];
-						Email = (string) row["email"];
-						Type = (int) row["type"];
-						Password = (byte[]) row["pwd"];
-						Salt = (byte[]) row["salt"];
+					if (result) {
+						ID = (int)row["id"];
+						Username = (string)row["username"];
+						Nickname = (string)row["nickname"];
+						Email = (string)row["email"];
+						Type = (int)row["type"];
+						Password = (byte[])row["pwd"];
+						Salt = (byte[])row["salt"];
+						AvatarURI = (string)row["avatar"];
+						NickColor = (string)row["nick_color"];
 					}
 				}
 			}
@@ -455,8 +465,8 @@ namespace ViData
 			string precmd = "INSERT INTO server.users(id, username, nickname, email, pwd, salt)" +
 					"VALUES(null, @username, @username, @email, @pwd, @salt)";
 			int ret = -1;
-			using ( Database db = new Database() ) {
-				using ( MySqlCommand cmd = new MySqlCommand(precmd, db.Connection) ) {
+			using (Database db = new Database()) {
+				using (MySqlCommand cmd = new MySqlCommand(precmd, db.Connection)) {
 					cmd.Parameters.Add("@username", MySqlDbType.String);
 					cmd.Parameters.Add("@email", MySqlDbType.VarChar);
 					cmd.Parameters.Add("@pwd", MySqlDbType.VarBinary);
