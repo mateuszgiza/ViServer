@@ -24,7 +24,7 @@ namespace ViCommV2
 		{
 			Nullable<float> temp = null;
 			if (s != null && s != String.Empty) {
-				temp = float.Parse(s, CultureInfo.InvariantCulture.NumberFormat);
+				temp = float.Parse(s);
 			}
 
 			return temp;
@@ -44,6 +44,15 @@ namespace ViCommV2
 		{
 			var text = new TextRange(rtb.Document.ContentStart, rtb.Document.ContentEnd);
 			text.ApplyPropertyValue(Inline.BaselineAlignmentProperty, System.Windows.BaselineAlignment.Center);
+		}
+
+		public static void ColorizeName(this Paragraph p, int length, string color)
+		{
+			TextPointer start = p.ContentStart.GetPositionAtOffset(0);
+			TextPointer end = p.ContentStart.GetPositionAtOffset(length + 1);
+			TextRange name = new TextRange(start, end);
+
+			name.ApplyPropertyValue(TextElement.ForegroundProperty, BrushExtension.FromARGB(color));
 		}
 
 		public static void DetectEmoticonsAndURL(this Paragraph p)
