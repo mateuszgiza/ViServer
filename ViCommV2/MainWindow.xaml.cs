@@ -1,10 +1,13 @@
 ﻿using System;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Security.Permissions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
+using System.Windows.Interop;
 using System.Windows.Media;
 
 // StickyWindow
@@ -79,6 +82,7 @@ namespace ViCommV2
 		private void Window_Loaded(object sender, RoutedEventArgs e)
 		{
 			Initialize();
+			Emoticons.RefreshCollection(grid_emoticons);
 
 			_forms = FormHelper.Instance;
 			Connect();
@@ -130,16 +134,28 @@ namespace ViCommV2
 			_client.Send(s);
 		}
 
-		private Table Message(Run date, Run text, RowType rowType)
+		private Table Message(Packet packet, RowType rowType)
 		{
-			BitmapImage bitmap = new BitmapImage(new Uri(@"Resources\Images\avatar.png", UriKind.Relative));
+			Run date = new Run(String.Format("{0:HH:mm:ss}", packet.date.ToLocalTime()));
+			date.SetBinding(Run.FontFamilyProperty, new Binding("DateFont.Name"));
+			date.SetBinding(Run.FontSizeProperty, new Binding("DateFont.Size"));
+			date.SetBinding(Run.ForegroundProperty, new Binding("DateForeground"));
+
+			Run text = new Run(packet.sender + ": " + packet.message);
+
+			BitmapImage bitmap = new BitmapImage(new Uri(packet.user.AvatarURI, UriKind.Absolute));
+			if (bitmap == null) {
+				bitmap = new BitmapImage(new Uri(@"Resources\Images\avatar.png", UriKind.Relative));
+			}
+
 			Rectangle rect = new Rectangle() {
 				RadiusX = 10,
 				RadiusY = 10,
 				Width = 24,
 				Height = 24,
-				Fill = new ImageBrush(bitmap)
+				Fill = new ImageBrush(bitmap),
 			};
+			RenderOptions.SetBitmapScalingMode(rect, BitmapScalingMode.HighQuality);
 			InlineUIContainer container = new InlineUIContainer(rect);
 
 			Paragraph avatar = new Paragraph(container);
@@ -148,6 +164,7 @@ namespace ViCommV2
 				Margin = new Thickness(1)
 			};
 			txt.DetectEmoticonsAndURL();
+			txt.ColorizeName(packet.sender.Length, packet.user.NickColor);
 			txt.SetBinding(Run.ForegroundProperty, new Binding("MessageForeground"));
 
 			Paragraph dT = new Paragraph(date) {
@@ -186,6 +203,11 @@ namespace ViCommV2
 			}
 			else if (rowType == RowType.Sender) {
 				tabRow.Style = (Style)this.chatBox.Resources["RowSender"];
+
+				if (ApplicationIsActivated() == false) {
+					_forms.Notify.ShowMessage(bitmap, text.Text);
+					_forms.Notify.Show();
+				}
 			}
 
 			//1.col - NICK
@@ -200,17 +222,9 @@ namespace ViCommV2
 			return tab;
 		}
 
-		public void AppendText(string sender, string msg, DateTime datetime, RowType rowType)
+		public void AppendText(Packet packet, RowType rowType)
 		{
-			Run date = new Run(String.Format("{0:HH:mm:ss}", datetime));
-			date.SetBinding(Run.FontFamilyProperty, new Binding("DateFont.Name"));
-			date.SetBinding(Run.FontSizeProperty, new Binding("DateFont.Size"));
-			date.SetBinding(Run.ForegroundProperty, new Binding("DateForeground"));
-
-			//Run name = new Run(sender + ": ");
-			Run text = new Run(sender + ": " + msg);
-
-			chatBox.Document.Blocks.Add(Message(date, text, rowType));
+			chatBox.Document.Blocks.Add(Message(packet, rowType));
 			chatBox.CenterText();
 			chatBox.ScrollToEnd();
 		}
@@ -257,7 +271,6 @@ namespace ViCommV2
 		private void CM_Exit_Click(object sender, RoutedEventArgs e)
 		{
 			_state = FormState.Exit;
-
 			this.Close();
 		}
 
@@ -269,11 +282,9 @@ namespace ViCommV2
 		private void CM_Maximize_Click(object sender, RoutedEventArgs e)
 		{
 			if (this.WindowState == System.Windows.WindowState.Maximized) {
-				(sender as MenuItem).IsChecked = false;
 				this.WindowState = System.Windows.WindowState.Normal;
 			}
 			else {
-				(sender as MenuItem).IsChecked = true;
 				this.WindowState = System.Windows.WindowState.Maximized;
 			}
 		}
@@ -325,6 +336,27 @@ namespace ViCommV2
 			Information,
 			User,
 			Sender
+		}
+
+		[DllImport("user32.dll", CharSet = CharSet.Auto, ExactSpelling = true)]
+		private static extern IntPtr GetForegroundWindow();
+
+		[DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+		private static extern int GetWindowThreadProcessId(IntPtr handle, out int processId);
+
+		/// <summary>Returns true if the current application has focus, false otherwise</summary>
+		public static bool ApplicationIsActivated()
+		{
+			var activatedHandle = GetForegroundWindow();
+			if (activatedHandle == IntPtr.Zero) {
+				return false;       // No window is currently activated
+			}
+
+			var procId = Process.GetCurrentProcess().Id;
+			int activeProcId;
+			GetWindowThreadProcessId(activatedHandle, out activeProcId);
+
+			return activeProcId == procId;
 		}
 
 		private System.Windows.Threading.DispatcherTimer t_writing;
@@ -390,6 +422,7 @@ namespace ViCommV2
 		private void Grid_MouseDown(object sender, MouseButtonEventArgs e)
 		{
 			if (e.ChangedButton == MouseButton.Left) {
+				e.Handled = true;
 				this.DragMove();
 			}
 		}
@@ -397,6 +430,15 @@ namespace ViCommV2
 		private void emoticonsContainer_LostFocus(object sender, RoutedEventArgs e)
 		{
 			emoticonsContainer.Visibility = System.Windows.Visibility.Hidden;
+		}
+
+		private void Window_Activated(object sender, EventArgs e)
+		{
+			NotifyWindow Notify = FormHelper.Instance.Notify;
+
+			if (Notify != null) {
+				Notify.Close();
+			}
 		}
 	}
 }

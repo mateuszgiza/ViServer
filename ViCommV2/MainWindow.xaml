@@ -4,7 +4,7 @@
         xmlns:local="clr-namespace:ViCommV2"
         xmlns:System="clr-namespace:System;assembly=mscorlib" x:Class="ViCommV2.MainWindow"
         Title="ViComm | " Height="350" Width="500" MinHeight="350" MinWidth="500" Background="Transparent"
-        Loaded="Window_Loaded" Closing="Window_Closing" WindowStartupLocation="CenterScreen" ResizeMode="CanResizeWithGrip" WindowStyle="None" MouseDown="Grid_MouseDown" AllowsTransparency="True" Topmost="{Binding AlwaysOnTop}">
+        Loaded="Window_Loaded" Closing="Window_Closing" WindowStartupLocation="CenterScreen" ResizeMode="CanResizeWithGrip" WindowStyle="None" MouseDown="Grid_MouseDown" AllowsTransparency="True" Topmost="{Binding AlwaysOnTop}" Activated="Window_Activated">
 
 	<Window.DataContext>
 		<local:Settings />
@@ -18,6 +18,18 @@
 			</Border>
 		</ControlTemplate>
 
+		<Style x:Key="topButtonsHover" TargetType="{x:Type Image}">
+			<Style.Triggers>
+				<Trigger Property="IsMouseOver" Value="True">
+					<Setter Property="Effect">
+						<Setter.Value>
+							<DropShadowEffect ShadowDepth="0" Color="Black" Opacity="0.5" BlurRadius="5" />
+						</Setter.Value>
+					</Setter>
+				</Trigger>
+			</Style.Triggers>
+		</Style>
+
 		<Style x:Key="emoticonHover" TargetType="{x:Type Image}">
 			<Style.Triggers>
 				<Trigger Property="IsMouseOver" Value="True">
@@ -29,10 +41,44 @@
 				</Trigger>
 			</Style.Triggers>
 		</Style>
+
+		<Style x:Key="NoChromeButton" TargetType="{x:Type Button}">
+			<Setter Property="Background" Value="Transparent" />
+			<Setter Property="BorderThickness" Value="1" />
+			<Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" />
+			<Setter Property="HorizontalContentAlignment" Value="Center" />
+			<Setter Property="VerticalContentAlignment" Value="Center" />
+			<Setter Property="Padding" Value="1" />
+			<Setter Property="Template">
+				<Setter.Value>
+					<ControlTemplate TargetType="{x:Type Button}">
+						<Grid x:Name="Chrome" Background="{TemplateBinding Background}" SnapsToDevicePixels="true">
+							<ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" Margin="{TemplateBinding Padding}" RecognizesAccessKey="True" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+						</Grid>
+						<ControlTemplate.Triggers>
+							<Trigger Property="IsEnabled" Value="false">
+								<Setter Property="Foreground" Value="#ADADAD" />
+								<Setter Property="Opacity" TargetName="Chrome" Value="0.5" />
+							</Trigger>
+						</ControlTemplate.Triggers>
+					</ControlTemplate>
+				</Setter.Value>
+			</Setter>
+		</Style>
 	</Window.Resources>
 
 	<Border Background="{Binding BackgroundColor}" CornerRadius="10,10,2,10" Padding="0,20,0,0" BorderThickness="1" BorderBrush="{Binding BorderColor}">
 		<Grid Margin="0,0,0,0">
+
+			<Button Style="{DynamicResource NoChromeButton}" Click="CM_Exit_Click" HorizontalAlignment="Right" Margin="0,-15,5,0" VerticalAlignment="Top" Width="15" Height="15">
+				<Image Style="{StaticResource topButtonsHover}" Source="Resources\Images\close.png" Opacity="0.5" />
+			</Button>
+			<Button Style="{DynamicResource NoChromeButton}" Click="CM_Maximize_Click" HorizontalAlignment="Right" Margin="0,-15,25,0" VerticalAlignment="Top" Width="15" Height="15">
+				<Image Style="{StaticResource topButtonsHover}" Source="Resources\Images\maximize.png" Opacity="0.5" />
+			</Button>
+			<Button Style="{DynamicResource NoChromeButton}" Click="CM_Minimize_Click" HorizontalAlignment="Right" Margin="0,-15,45,0" VerticalAlignment="Top" Width="15" Height="15">
+				<Image Style="{StaticResource topButtonsHover}" Source="Resources\Images\minimize.png" Opacity="0.5" />
+			</Button>
 
 			<Rectangle VerticalAlignment="Stretch" Width="1" Margin="140,10,0,10" Stroke="{Binding BorderColor}" HorizontalAlignment="Left" />
 
@@ -96,28 +142,26 @@
 					</Style>
 				</ListBox.Resources>
 			</ListBox>
-			<Button x:Name="bt_menu" Content="Menu" HorizontalAlignment="Left" VerticalAlignment="Top" Width="56" Margin="10,-17,0,0" Height="25" Click="bt_menu_Click" ContextMenuService.Placement="Bottom">
+			<Button x:Name="bt_menu" Style="{DynamicResource NoChromeButton}" HorizontalAlignment="Left" Margin="10,-17,0,0" VerticalAlignment="Top" Width="20" Height="20" Click="bt_menu_Click" ContextMenuService.Placement="Bottom">
+				<Image Style="{StaticResource topButtonsHover}" Source="Resources\Images\menu.png" Opacity="0.5" />
 				<Button.ContextMenu>
 					<ContextMenu>
 						<MenuItem Header="Wyczyść" Click="CM_Clear_Click" />
 						<Separator />
-						<MenuItem Header="Ustawienia" Click="CM_Settings_Click" />
+						<MenuItem Header="Ustawienia" Click="CM_Settings_Click">
+							<MenuItem.Icon>
+								<Image Source="Resources\Images\settings.png" Width="20" Height="20" Opacity="0.5" />
+							</MenuItem.Icon>
+						</MenuItem>
 						<Separator />
 						<MenuItem Header="Wyloguj" Click="CM_Logout_Click" />
 						<MenuItem Header="Wyjdź" Click="CM_Exit_Click" />
 					</ContextMenu>
 				</Button.ContextMenu>
 			</Button>
-			<Label x:Name="lb_Header" Content="ViComm | Nick: " Margin="71,-20,10,0" VerticalAlignment="Top" FontSize="14" Foreground="LightGray">
-				<Label.ContextMenu>
-					<ContextMenu>
-						<MenuItem Header="Minimalizuj" Click="CM_Minimize_Click" />
-						<MenuItem Header="Maksymalizuj" Click="CM_Maximize_Click" />
-						<MenuItem Header="Wyjdź" Click="CM_Exit_Click" />
-					</ContextMenu>
-				</Label.ContextMenu>
-			</Label>
-			<ScrollViewer x:Name="emoticonsContainer" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,10,50" Width="250" Height="200" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" LostFocus="emoticonsContainer_LostFocus"  Visibility="Hidden">
+			<Label x:Name="lb_Header" Content="ViComm | Nick: " Margin="35,-20,65,0" VerticalAlignment="Top" FontSize="14" Foreground="LightGray" />
+
+			<ScrollViewer x:Name="emoticonsContainer" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,11,50" Width="250" Height="200" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" LostFocus="emoticonsContainer_LostFocus"  Visibility="Hidden">
 				<ScrollViewer.Clip>
 					<RectangleGeometry Rect="0,0,250,200" RadiusX="5" RadiusY="5" />
 				</ScrollViewer.Clip>
