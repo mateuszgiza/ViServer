@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -23,37 +24,51 @@ namespace ViCommV2
 				_emoticons.Add(name.ToLower(), new Uri(path, UriKind.Relative));
 				AddtoRegex(name.ToLower());
 
-				MainWindow Main = FormHelper.Instance.Main;
-				Image item = GetEmoticonFromString(name);
-				item.MouseLeftButtonUp += (sender, e) => {
-					Main.inputBox.AppendText(name);
-					Main.emoticonsContainer.Visibility = Visibility.Hidden;
-					Main.inputBox.Focus();
-				};
-				item.Style = (Style)Main.FindResource("emoticonHover");
-				item.ToolTip = name;
-
-				InsertToGrid(Main.grid_emoticons, item);
+				InsertToGrid(FormHelper.Instance.Main.grid_emoticons, name);
 			}
 		}
 
 		private static int lastColumn = 5;
 		private static int lastRow = -1;
 
-		private static void InsertToGrid(Grid grid, Image image)
+		private static void InsertToGrid(Grid grid, string name)
 		{
 			if (lastColumn > 4) {
 				lastColumn = 0;
 				lastRow++;
+
 				grid.RowDefinitions.Add(new RowDefinition() { Height = (GridLength)new GridLengthConverter().ConvertFromString("25") });
 				grid.Height = (lastRow + 1) * 25;
 			}
 
-			Grid.SetColumn(image, lastColumn);
-			Grid.SetRow(image, lastRow);
+			MainWindow Main = FormHelper.Instance.Main;
+
+			Image item = GetEmoticonFromString(name);
+			item.MouseLeftButtonUp += (sender, e) => {
+				Main.inputBox.AppendText(name);
+				Main.emoticonsContainer.Visibility = Visibility.Hidden;
+				Main.inputBox.CaretIndex = Main.inputBox.Text.Length;
+				Main.inputBox.Focus();
+			};
+			item.Style = (Style)Main.FindResource("emoticonHover");
+			item.ToolTip = name;
+
+			Grid.SetColumn(item, lastColumn);
+			Grid.SetRow(item, lastRow);
 			lastColumn++;
 
-			grid.Children.Add(image);
+			grid.Children.Add(item);
+		}
+
+		public static void RefreshCollection(Grid grid)
+		{
+			lastColumn = 5;
+			lastRow = -1;
+			grid.Children.Clear();
+
+			foreach (string name in _emoticons.Keys) {
+				InsertToGrid(grid, name);
+			}
 		}
 
 		public static Uri GetPath(string name)
