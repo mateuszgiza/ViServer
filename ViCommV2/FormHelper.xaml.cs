@@ -3,82 +3,59 @@ using System.Windows;
 
 namespace ViCommV2
 {
-	/// <summary>
-	/// Interaction logic for FormHelper.xaml
-	/// </summary>
-	[SecurityPermission(SecurityAction.Demand, Flags = SecurityPermissionFlag.ControlAppDomain)]
-	public partial class FormHelper : Window
-	{
-		public FormHelper()
-		{
-			InitializeComponent();
-			_instance = this;
+    /// <summary>
+    ///     Interaction logic for FormHelper.xaml
+    /// </summary>
+    [SecurityPermission(SecurityAction.Demand, Flags = SecurityPermissionFlag.ControlAppDomain)]
+    public partial class FormHelper : Window
+    {
+        private static FormHelper _instance;
 
-			_settingsManager = SettingsProvider.Instance;
+        public FormHelper()
+        {
+            InitializeComponent();
+            _instance = this;
 
-			_login = new LoginWindow();
-			_login.Show();
-		}
+            SettingsManager = SettingsProvider.Instance;
 
-		private static FormHelper _instance = null;
+            Login = new LoginWindow();
+            Login.Show();
+        }
 
-		public static FormHelper Instance
-		{
-			get
-			{
-				if (_instance == null) {
-					_instance = new FormHelper();
-				}
+        public static FormHelper Instance {
+            get {
+                if (_instance == null) {
+                    _instance = new FormHelper();
+                }
 
-				return _instance;
-			}
-		}
+                return _instance;
+            }
+        }
 
-		#region Fields
+        #region Fields
 
-		public static bool isClosing { get; set; }
+        public static bool isClosing { get; set; }
 
-		private MainWindow _main;
-		public MainWindow Main
-		{
-			get { return _main; }
-			set { _main = value; }
-		}
+        public MainWindow Main { get; set; }
 
-		private LoginWindow _login;
-		public LoginWindow Login
-		{
-			get { return _login; }
-			set { _login = value; }
-		}
+        public LoginWindow Login { get; set; }
 
-		private RegisterWindow _register;
-		public RegisterWindow Register
-		{
-			get { return _register; }
-			set { _register = value; }
-		}
+        public RegisterWindow Register { get; set; }
 
-		private SettingsProvider _settingsManager;
-		public SettingsProvider SettingsManager
-		{
-			get { return _settingsManager; }
-			set { _settingsManager = value; }
-		}
+        public SettingsProvider SettingsManager { get; set; }
 
-		private NotifyWindow _notifyWindow;
-		public NotifyWindow Notify
-		{
-			get
-			{
-				if (_notifyWindow == null) {
-					_notifyWindow = new NotifyWindow();
-				}
-				return _notifyWindow;
-			}
-			set { _notifyWindow = value; }
-		}
+        private NotifyWindow _notifyWindow;
 
-		#endregion Fields
-	}
+        public NotifyWindow Notify {
+            get {
+                if (_notifyWindow == null) {
+                    _notifyWindow = new NotifyWindow();
+                }
+                return _notifyWindow;
+            }
+            set { _notifyWindow = value; }
+        }
+
+        #endregion Fields
+    }
 }

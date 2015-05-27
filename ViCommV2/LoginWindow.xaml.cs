@@ -1,107 +1,128 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using ViCommV2.Classes;
 
 namespace ViCommV2
 {
-	/// <summary>
-	/// Interaction logic for LoginWindow.xaml
-	/// </summary>
-	public partial class LoginWindow : Window
-	{
-		public FormState state;
-		private ClientManager client;
+    /// <summary>
+    ///     Interaction logic for LoginWindow.xaml
+    /// </summary>
+    public partial class LoginWindow : Window
+    {
+        public enum FormState
+        {
+            Null,
+            Logging,
+            Logged
+        }
 
-		public LoginWindow()
-		{
-			InitializeComponent();
-		}
+        private ClientManager client;
+        public FormState state;
 
-		private void Window_Loaded(object sender, RoutedEventArgs e)
-		{
-			state = FormState.Null;
+        public LoginWindow()
+        {
+            InitializeComponent();
+            InitializeEvents();
 
-			tb_login.Focus();
-		}
+            var stick = new WindowStickManager(this);
+        }
 
-		private void PasswordBox_KeyDown(object sender, KeyEventArgs e)
-		{
-			if (e.Key == Key.Enter) {
-				Login();
-			}
-		}
+        public void InitializeEvents()
+        {
+            var helper = FormHelper.Instance;
 
-		private void Login_Click(object sender, RoutedEventArgs e)
-		{
-			Login();
-		}
+            bt_Login.Click += (sender, e) => { Login(); };
 
-		private void Login()
-		{
-			if (tb_login.Text != "" && tb_pwd.Password != "") {
-				client = ClientManager.Instance;
+            lb_Register.MouseLeftButtonUp += (sender, e) => {
+                helper.Register = new RegisterWindow();
+                helper.Register.Show();
+                state = FormState.Logging;
+                Close();
+            };
 
-				client.Connect();
+            lb_Register.MouseEnter += (sender, e) => { lb_Register.TextDecorations = TextDecorations.Underline; };
+            lb_Register.MouseLeave += (sender, e) => { lb_Register.TextDecorations = null; };
 
-				if (client.Connected) {
-					client.Login(tb_login.Text, Encoding.UTF8.GetBytes(tb_pwd.Password));
+            tb_login.KeyDown += (sender, e) => {
+                if (e.Key == Key.Enter) {
+                    Login();
+                }
+            };
 
-					state = FormState.Logging;
-				}
-			}
-			else {
-				if (tb_login.Text == "") {
-					tb_login.BorderBrush = Brushes.OrangeRed;
-					tb_login.BorderThickness = new Thickness(2);
-				}
+            tb_pwd.KeyDown += (sender, e) => {
+                if (e.Key == Key.Enter) {
+                    Login();
+                }
+            };
+        }
 
-				if (tb_pwd.Password == "") {
-					tb_pwd.BorderBrush = Brushes.OrangeRed;
-					tb_pwd.BorderThickness = new Thickness(2);
-				}
-			}
-		}
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            state = FormState.Null;
+            tb_login.Focus();
+        }
 
-		private void tb_login_TextChanged(object sender, TextChangedEventArgs e)
-		{
-			if (tb_login.Text != "") {
-				tb_login.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFE3E9EF"));
-				tb_login.BorderThickness = new Thickness(1);
-			}
-			else {
-				tb_login.BorderBrush = Brushes.OrangeRed;
-				tb_login.BorderThickness = new Thickness(2);
-			}
-		}
+        private void Login()
+        {
+            if (tb_login.Text != "" && tb_pwd.Password != "") {
+                client = ClientManager.Instance;
 
-		private void tb_pwd_PasswordChanged(object sender, RoutedEventArgs e)
-		{
-			if (tb_pwd.Password != "") {
-				tb_pwd.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFE3E9EF"));
-				tb_pwd.BorderThickness = new Thickness(1);
-			}
-			else {
-				tb_pwd.BorderBrush = Brushes.OrangeRed;
-				tb_pwd.BorderThickness = new Thickness(2);
-			}
-		}
+                client.Connect();
 
-		public enum FormState
-		{
-			Null,
-			Logging,
-			Logged
-		}
+                if (client.Connected) {
+                    client.Login(tb_login.Text, Encoding.UTF8.GetBytes(tb_pwd.Password));
 
-		private void Window_Closing(object sender, CancelEventArgs e)
-		{
-			if (state == FormState.Null) {
-				FormHelper.isClosing = true;
-				System.Environment.Exit(0);
-			}
-		}
-	}
+                    state = FormState.Logging;
+                }
+            }
+            else {
+                if (tb_login.Text == "") {
+                    tb_login.BorderBrush = Brushes.OrangeRed;
+                    tb_login.BorderThickness = new Thickness(2);
+                }
+
+                if (tb_pwd.Password == "") {
+                    tb_pwd.BorderBrush = Brushes.OrangeRed;
+                    tb_pwd.BorderThickness = new Thickness(2);
+                }
+            }
+        }
+
+        private void tb_login_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (tb_login.Text != "") {
+                tb_login.BorderBrush = new SolidColorBrush((Color) ColorConverter.ConvertFromString("#FFE3E9EF"));
+                tb_login.BorderThickness = new Thickness(1);
+            }
+            else {
+                tb_login.BorderBrush = Brushes.OrangeRed;
+                tb_login.BorderThickness = new Thickness(2);
+            }
+        }
+
+        private void tb_pwd_PasswordChanged(object sender, RoutedEventArgs e)
+        {
+            if (tb_pwd.Password != "") {
+                tb_pwd.BorderBrush = new SolidColorBrush((Color) ColorConverter.ConvertFromString("#FFE3E9EF"));
+                tb_pwd.BorderThickness = new Thickness(1);
+            }
+            else {
+                tb_pwd.BorderBrush = Brushes.OrangeRed;
+                tb_pwd.BorderThickness = new Thickness(2);
+            }
+        }
+
+        private void Window_Closing(object sender, CancelEventArgs e)
+        {
+            if (state == FormState.Null) {
+                FormHelper.isClosing = true;
+                Environment.Exit(0);
+            }
+        }
+    }
 }
