@@ -10,6 +10,8 @@
 *.userosscache
 *.sln.docstates
 
+.*/
+
 ViComm/[Oo]bj/
 ViComm/[Bb]in/
 ViServer/[Oo]bj/
