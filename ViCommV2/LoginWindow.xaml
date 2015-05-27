@@ -1,36 +1,35 @@
 ﻿<Window x:Class="ViCommV2.LoginWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-		xmlns:local="clr-namespace:ViCommV2"
-        Title="Login" Height="210" Width="300" WindowStyle="ToolWindow" Closing="Window_Closing" Loaded="Window_Loaded" WindowStartupLocation="CenterScreen">
+        xmlns:local="clr-namespace:ViCommV2"
+        Title="Login" Height="250" Width="300" Closing="Window_Closing" Loaded="Window_Loaded"
+        WindowStartupLocation="CenterScreen" ResizeMode="NoResize">
 
-	<Window.Resources>
-	</Window.Resources>
+    <Window.Background>
+        <RadialGradientBrush>
+            <GradientStop Color="#FF645A64" />
+            <GradientStop Color="#FF434E54" Offset="1" />
+        </RadialGradientBrush>
+    </Window.Background>
 
-	<Grid>
-		<Grid.Background>
-			<RadialGradientBrush>
-				<GradientStop Color="#FF645A64" />
-				<GradientStop Color="#FF434E54" Offset="1" />
-			</RadialGradientBrush>
-		</Grid.Background>
-		<Label Content="Login:" HorizontalAlignment="Left" VerticalAlignment="Top" Foreground="#FFC8C8C8"
-               FontSize="14" Margin="10,30,0,0" Height="30" />
-		<Label Content="Password:" HorizontalAlignment="Left" VerticalAlignment="Top" Foreground="#FFC8C8C8"
-               FontSize="14" Margin="10,90,0,0" Height="30" />
-		<TextBox x:Name="tb_login" Height="30" VerticalAlignment="Top" Margin="0,30,10,0" HorizontalAlignment="Right" Width="196"
-                 TabIndex="1" AllowDrop="False" FontSize="14"
-                 RenderTransformOrigin="0.5,0.5" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" KeyDown="PasswordBox_KeyDown" ToolTip="Enter your login" TextChanged="tb_login_TextChanged">
-			<TextBox.BorderBrush>
-				<LinearGradientBrush EndPoint="0,20" MappingMode="Absolute" StartPoint="0,0">
-					<GradientStop Color="#FFABADB3" Offset="0.05" />
-					<GradientStop Color="#FFE2E3EA" Offset="0.07" />
-					<GradientStop Color="#FFE3E9EF" Offset="1" />
-				</LinearGradientBrush>
-			</TextBox.BorderBrush>
-		</TextBox>
-		<PasswordBox x:Name="tb_pwd" Margin="0,90,10,0" HorizontalAlignment="Right" Width="196" Height="30" VerticalAlignment="Top" AllowDrop="False" TabIndex="2" FontFamily="Segoe UI" FontSize="14" VerticalContentAlignment="Center" KeyDown="PasswordBox_KeyDown" HorizontalContentAlignment="Center" PasswordChanged="tb_pwd_PasswordChanged" />
-		<Button Content="Login" Margin="0,0,10,10" HorizontalAlignment="Right" Width="196" Height="30"
-                VerticalAlignment="Bottom" FontSize="14" Click="Login_Click" />
-	</Grid>
+    <Grid HorizontalAlignment="Center" VerticalAlignment="Center" Width="200">
+        <Label Content="Login:" HorizontalAlignment="Left" VerticalAlignment="Top" Foreground="#FFC8C8C8"
+               FontSize="14" Margin="0,0,0,0" Height="30" />
+        <TextBox x:Name="tb_login" Height="30" VerticalAlignment="Top" Margin="0,30,0,0" HorizontalAlignment="Stretch"
+                 TabIndex="1" AllowDrop="False" FontSize="14" VerticalContentAlignment="Center"
+                 TextChanged="tb_login_TextChanged" />
+
+        <Label Content="Password:" HorizontalAlignment="Left" VerticalAlignment="Top" Foreground="#FFC8C8C8"
+               FontSize="14" Margin="0,60,0,0" Height="30" />
+        <PasswordBox x:Name="tb_pwd" Margin="0,90,0,0" HorizontalAlignment="Stretch" Height="30"
+                     VerticalAlignment="Top" AllowDrop="False" TabIndex="2" FontFamily="Segoe UI" FontSize="14"
+                     VerticalContentAlignment="Center" PasswordChanged="tb_pwd_PasswordChanged" />
+
+        <Button x:Name="bt_Login" Content="Login" Margin="0,130,0,0" HorizontalAlignment="Stretch" Height="30"
+                VerticalAlignment="Top" Background="#00000000" Foreground="LightGray"
+                Style="{StaticResource MyButtonStyle}" />
+
+        <TextBlock x:Name="lb_Register" Text="Register" Foreground="LightGray" Margin="0,160,0,0"
+                   HorizontalAlignment="Center" VerticalAlignment="Top" FontSize="9" Padding="5" Cursor="Hand" />
+    </Grid>
 </Window>

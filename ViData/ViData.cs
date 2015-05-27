@@ -8,6 +8,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.Cryptography;
 using System.Text;
 using MySql.Data.MySqlClient;
+using Newtonsoft.Json;
 
 namespace ViData
 {
@@ -237,74 +238,82 @@ namespace ViData
 	[Serializable]
 	public class Packet
 	{
-		public PacketType type;
-		public User user;
-		public Information info;
-		public DateTime date;
-		public string sender;
-		public string receiver;
-		public string message;
+		public PacketType Type;
+		public User User;
+		public Information Information;
+		public DateTime Date;
+		public string Sender;
+		public string Receiver;
+		public string Message;
+
+		public Packet()
+		{
+		}
 
 		public Packet(PacketType type)
 		{
-			this.type = type;
+			this.Type = type;
 		}
 
 		public Packet(PacketType type, string msg)
 		{
-			this.type = type;
-			this.message = msg;
+			this.Type = type;
+			this.Message = msg;
 		}
 
 		public Packet(PacketType type, string sender, string msg)
 		{
-			this.type = type;
-			this.sender = sender;
-			this.message = msg;
+			this.Type = type;
+			this.Sender = sender;
+			this.Message = msg;
 		}
 
 		public Packet(PacketType type, User u, string msg)
 		{
-			this.type = type;
-			this.user = u;
-			this.message = msg;
+			this.Type = type;
+			this.User = u;
+			this.Message = msg;
 		}
 
 		public Packet(PacketType type, Information i)
 		{
-			this.type = type;
-			this.info = i;
+			this.Type = type;
+			this.Information = i;
 		}
 
 		public Packet(byte[] buffer)
 		{
-			Packet p;
+			String deser = Encoding.UTF8.GetString(buffer);
+			//Console.WriteLine(deser);
+			Packet p = JsonConvert.DeserializeObject<Packet>(deser);
 
-			using (MemoryStream ms = new MemoryStream(buffer)) {
-				BinaryFormatter bin = new BinaryFormatter();
-				p = (Packet)bin.Deserialize(ms);
-			}
+			//using (MemoryStream ms = new MemoryStream(buffer)) {
+			//	BinaryFormatter bin = new BinaryFormatter();
+			//	p = (Packet)bin.Deserialize(ms);
+			//}
 
-			type = p.type;
-			user = p.user;
-			info = p.info;
-			date = p.date;
-			sender = p.sender;
-			receiver = p.receiver;
-			message = p.message;
+			Type = p.Type;
+			User = p.User;
+			Information = p.Information;
+			Date = p.Date;
+			Sender = p.Sender;
+			Receiver = p.Receiver;
+			Message = p.Message;
 		}
 
 		public byte[] ToBytes()
 		{
-			byte[] bytes;
+			//byte[] bytes;
 
-			using (MemoryStream ms = new MemoryStream()) {
-				BinaryFormatter bin = new BinaryFormatter();
-				bin.Serialize(ms, this);
-				bytes = ms.ToArray();
-			}
+			//using (MemoryStream ms = new MemoryStream()) {
+			//	BinaryFormatter bin = new BinaryFormatter();
+			//	bin.Serialize(ms, this);
+			//	bytes = ms.ToArray();
+			//}
 
-			return bytes;
+			string json = JsonConvert.SerializeObject(this);
+
+			return Encoding.UTF8.GetBytes(json);
 		}
 	}
 
@@ -338,6 +347,10 @@ namespace ViData
 		public string User;
 		public string Message;
 		public List<string> Contacts;
+
+		public Information()
+		{
+		}
 
 		public Information(InformationType t, string user, string msg)
 		{

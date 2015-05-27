@@ -207,7 +207,7 @@ namespace ViServer
 
 		public void Send(Packet p)
 		{
-			switch (p.type) {
+			switch (p.Type) {
 				case PacketType.Login:
 					// Reserved
 					break;
@@ -219,7 +219,7 @@ namespace ViServer
 					break;
 				case PacketType.SingleChat:
 					Console.WriteLine("[{0}] Sending packet ({1})...\n\tFrom: {2}\n\tTo: {3}",
-						_id, p.type, p.sender, p.receiver);
+						_id, p.Type, p.Sender, p.Receiver);
 					break;
 				case PacketType.MultiChat:
 
@@ -243,7 +243,7 @@ namespace ViServer
 					if (readBytes > 0) {
 						Packet p = new Packet(buffer);
 
-						if (p.type != PacketType.Disconnect) {
+						if (p.Type != PacketType.Disconnect) {
 							new Task(() => Received(p)).Start();
 						}
 						else {
@@ -260,15 +260,15 @@ namespace ViServer
 
 		public void Received(Packet p)
 		{
-			switch (p.type) {
+			switch (p.Type) {
 				case PacketType.Login:
-					Login(p.user);
+					Login(p.User);
 					break;
 				case PacketType.Disconnect:
 					CloseConnection();
 					break;
 				case PacketType.Register:
-					Register(p.user);
+					Register(p.User);
 					break;
 
 				case PacketType.Information:
@@ -313,7 +313,7 @@ namespace ViServer
 				msg = _guid;
 
 				Packet p = new Packet(PacketType.Information);
-				p.info = new Information(InformationType.Joining, Name, "joined!");
+				p.Information = new Information(InformationType.Joining, Name, "joined!");
 				MultiChatWithoutMe(p);
 			}
 			else {
@@ -322,9 +322,9 @@ namespace ViServer
 			}
 
 			Packet p1 = new Packet(PacketType.Login);
-			p1.user = u;
-			p1.message = msg;
-			p1.info = new Information(InformationType.Contacts, Server.GetContacts());
+			p1.User = u;
+			p1.Message = msg;
+			p1.Information = new Information(InformationType.Contacts, Server.GetContacts());
 
 			clientSocket.Send(p1.ToBytes());
 		}
@@ -336,18 +336,18 @@ namespace ViServer
 
 			Packet res = new Packet(PacketType.Register);
 			if (result) {
-				res.message = "1You've successfully registered!";
-				res.user = user;
+				res.Message = "1You've successfully registered!";
+				res.User = user;
 			}
 			else {
-				res.message = "0Something went wrong!";
+				res.Message = "0Something went wrong!";
 			}
 			clientSocket.Send(res.ToBytes());
 		}
 
 		private void InformationReceived(Packet p)
 		{
-			if (p.info.Type == InformationType.Writing) {
+			if (p.Information.Type == InformationType.Writing) {
 				MultiChatWithoutMe(p);
 			}
 		}
@@ -357,7 +357,7 @@ namespace ViServer
 			Console.WriteLine("[{0}] User {1} disconnected!", _id, Name);
 
 			Packet p = new Packet(PacketType.Information);
-			p.info = new Information(InformationType.Leaving, Name, "disconnected!");
+			p.Information = new Information(InformationType.Leaving, Name, "disconnected!");
 			MultiChatWithoutMe(p);
 
 			Disconnect();
