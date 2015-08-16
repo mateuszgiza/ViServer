@@ -1,38 +1,36 @@
+using System.Collections.Generic;
 using System.Windows;
 
 namespace ViCommV2.Classes
 {
-    internal class WindowStickManager
+    public static class WindowStickManager
     {
-        private readonly Window _window;
-        private readonly int DIFF;
-        private Point _screen;
-
-        public WindowStickManager(Window window) : this(window, 10) {}
-
-        public WindowStickManager(Window window, int diff)
+        // ReSharper disable once CollectionNeverQueried.Local
+        private static readonly List<Window> Windows = new List<Window>();
+        private const int StickSize = 10;
+        private static Point _screen = new Point(SystemParameters.WorkArea.Width, SystemParameters.WorkArea.Height);
+        
+        public static void AddWindow(Window window)
         {
-            _window = window;
-            DIFF = diff;
+            Windows.Add(window);
 
-            window.LocationChanged += (s, e) => { CheckBoundaries(); };
-            _screen = new Point(SystemParameters.WorkArea.Width, SystemParameters.WorkArea.Height);
+            window.LocationChanged += (s, e) => CheckBoundaries(window);
         }
 
-        public void CheckBoundaries()
+        private static void CheckBoundaries(Window window)
         {
-            if (_window.Top <= DIFF && _window.Top >= -DIFF) {
-                _window.Top = 0;
+            if (window.Top <= StickSize && window.Top >= -StickSize) {
+                window.Top = 0;
             }
-            else if (_window.Top + _window.Height >= _screen.Y - DIFF && _window.Top + _window.Height <= _screen.Y + DIFF) {
-                _window.Top = _screen.Y - _window.Height;
+            else if (window.Top + window.Height >= _screen.Y - StickSize && window.Top + window.Height <= _screen.Y + StickSize) {
+                window.Top = _screen.Y - window.Height;
             }
 
-            if (_window.Left <= DIFF && _window.Left >= -DIFF) {
-                _window.Left = 0;
+            if (window.Left <= StickSize && window.Left >= -StickSize) {
+                window.Left = 0;
             }
-            else if (_window.Left + _window.Width >= _screen.X - DIFF && _window.Left + _window.Width <= _screen.X + DIFF) {
-                _window.Left = _screen.X - _window.Width;
+            else if (window.Left + window.Width >= _screen.X - StickSize && window.Left + window.Width <= _screen.X + StickSize) {
+                window.Left = _screen.X - window.Width;
             }
         }
     }
