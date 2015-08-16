@@ -1,2 +1,5 @@
 language: csharp
 solution: ViServer.sln
+install:
+  - sudo apt-get install -y gtk-sharp2
+  - nuget restore ViServer.sln
