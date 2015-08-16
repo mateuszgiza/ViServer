@@ -4,7 +4,7 @@ using System.Data;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Runtime.Serialization.Formatters.Binary;
+using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Text;
 using MySql.Data.MySqlClient;
@@ -14,9 +14,7 @@ namespace ViData
 {
 	public class Tools
 	{
-		private Tools()
-		{
-		}
+		private Tools() { }
 
 		public static string GetStartupPath()
 		{
@@ -30,62 +28,59 @@ namespace ViData
 
 		public static void CreateFile(string file, string line)
 		{
-			string path = GetStartupPath() + @"\" + file;
-			if (!File.Exists(path)) {
-				File.Create(path).Dispose();
-				TextWriter tw = new StreamWriter(path);
-				tw.WriteLine(line);
-				tw.Close();
-			}
+			var path = GetStartupPath() + @"\" + file;
+		    if (File.Exists(path)) {
+		        return;
+		    }
+
+		    File.Create(path).Dispose();
+		    TextWriter tw = new StreamWriter(path);
+		    tw.WriteLine(line);
+		    tw.Close();
 		}
 
 		public static string ReadLineTxt(string file)
 		{
-			string line = "";
-			string path = GetStartupPath() + @"\" + file;
-			if (File.Exists(path)) {
-				StreamReader f = new StreamReader(path);
-				line = f.ReadLine();
-				f.Close();
-			}
+			var line = "";
+			var path = GetStartupPath() + @"\" + file;
+		    if (!File.Exists(path)) {
+		        return line;
+		    }
 
-			return line;
+		    var f = new StreamReader(path);
+		    line = f.ReadLine();
+		    f.Close();
+
+		    return line;
 		}
 
-		public static string GetIP()
+		public static string GetIp()
 		{
-			string ip = ReadLineTxt("ip.txt");
+		    var ip = ReadLineTxt("ip.txt");
 
-			if (ip.Length > 0) {
-				return ip;
-			}
-			else {
-				return (GetIPFromHostname("viserver.noip.pl"));
-			}
+		    return ip.Length > 0 ? ip : (GetIpFromHostname("viserver.noip.pl"));
 		}
 
-		public static string GetIPv4()
+	    public static string GetIPv4()
 		{
-			IPAddress[] ips = Dns.GetHostAddresses(Dns.GetHostName());
+			var ips = Dns.GetHostAddresses(Dns.GetHostName());
 
-			foreach (IPAddress ip in ips) {
-				if (ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork) {
-					return ip.ToString();
-				}
+			foreach (var ip in ips.Where(ip => ip.AddressFamily == AddressFamily.InterNetwork)) {
+			    return ip.ToString();
 			}
 
 			return "127.0.0.1";
 		}
 
-		public static string GetIPFromHostname(string host)
+		public static string GetIpFromHostname(string host)
 		{
 			return Dns.GetHostAddresses(host)[0].ToString();
 		}
 
 		public static byte[] GenerateSalt()
 		{
-			RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider();
-			byte[] buff = new byte[128 / 8]; // 128 bits
+			var rng = new RNGCryptoServiceProvider();
+			var buff = new byte[128 / 8]; // 128 bits
 			rng.GetBytes(buff);
 
 			return buff;
@@ -98,7 +93,7 @@ namespace ViData
 
 		public static byte[] Hash(byte[] value, byte[] salt)
 		{
-			byte[] saltedValue = value.Concat(salt).ToArray();
+			var saltedValue = value.Concat(salt).ToArray();
 
 			return new SHA256Managed().ComputeHash(saltedValue);
 		}
@@ -106,9 +101,8 @@ namespace ViData
 
 	public class Database : IDisposable
 	{
-		private MySqlConnection mysql;
-		private MySqlCommand cmd;
-		private MySqlDataReader reader;
+	    private MySqlCommand _cmd;
+		private MySqlDataReader _reader;
 		//MySqlDataAdapter adapter;
 
 		public string Query;
@@ -120,36 +114,31 @@ namespace ViData
 
 		public Database(bool start)
 		{
-			mysql = new MySqlConnection();
-			mysql.ConnectionString = "server=127.0.0.1;uid=ViServer;" +
-							"pwd=lubiemaslo;database=server;Charset=utf8;";
+		    Connection = new MySqlConnection {
+		        ConnectionString = "server=127.0.0.1;uid=ViServer;" +
+		                           "pwd=lubiemaslo;database=server;Charset=utf8;"
+		    };
 
-			if (start)
+		    if (start)
 				Connect();
 		}
 
 		public void Connect()
 		{
 			try {
-				mysql.Open();
+				Connection.Open();
 			}
 			catch (MySqlException ex) {
 				Exception(ex);
 			}
 		}
 
-		public MySqlConnection Connection
-		{
-			get
-			{
-				return this.mysql;
-			}
-		}
+		public MySqlConnection Connection { get; private set; }
 
-		public static DataTable Select(MySqlCommand cmd)
+	    public static DataTable Select(MySqlCommand cmd)
 		{
-			DataTable tb = new DataTable();
-			MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
+			var tb = new DataTable();
+			var adapter = new MySqlDataAdapter(cmd);
 
 			using (cmd) {
 				try {
@@ -171,7 +160,7 @@ namespace ViData
 
 		public static int Insert(MySqlCommand cmd)
 		{
-			int ret = -1;
+			var ret = -1;
 			using (cmd) {
 				try {
 					if (cmd.Connection.State == ConnectionState.Closed) {
@@ -192,7 +181,7 @@ namespace ViData
 
 		public static int Exception(MySqlException ex)
 		{
-			int id = -1;
+			const int id = -1;
 
 			switch (ex.Number) {
 				case 0:
@@ -213,25 +202,27 @@ namespace ViData
 
 		public void Close()
 		{
-			mysql.Close();
+			Connection.Close();
 		}
 
 		public void Dispose()
 		{
-			if (reader != null) {
-				reader.Dispose();
-				reader = null;
+			if (_reader != null) {
+				_reader.Dispose();
+				_reader = null;
 			}
 
-			if (cmd != null) {
-				cmd.Dispose();
-				cmd = null;
+			if (_cmd != null) {
+				_cmd.Dispose();
+				_cmd = null;
 			}
 
-			if (mysql != null) {
-				mysql.Dispose();
-				mysql = null;
-			}
+		    if (Connection == null) {
+		        return;
+		    }
+
+		    Connection.Dispose();
+		    Connection = null;
 		}
 	}
 
@@ -252,40 +243,40 @@ namespace ViData
 
 		public Packet(PacketType type)
 		{
-			this.Type = type;
+			Type = type;
 		}
 
 		public Packet(PacketType type, string msg)
 		{
-			this.Type = type;
-			this.Message = msg;
+			Type = type;
+			Message = msg;
 		}
 
 		public Packet(PacketType type, string sender, string msg)
 		{
-			this.Type = type;
-			this.Sender = sender;
-			this.Message = msg;
+			Type = type;
+			Sender = sender;
+			Message = msg;
 		}
 
 		public Packet(PacketType type, User u, string msg)
 		{
-			this.Type = type;
-			this.User = u;
-			this.Message = msg;
+			Type = type;
+			User = u;
+			Message = msg;
 		}
 
 		public Packet(PacketType type, Information i)
 		{
-			this.Type = type;
-			this.Information = i;
+			Type = type;
+			Information = i;
 		}
 
 		public Packet(byte[] buffer)
 		{
-			String deser = Encoding.UTF8.GetString(buffer);
+			var deser = Encoding.UTF8.GetString(buffer);
 			//Console.WriteLine(deser);
-			Packet p = JsonConvert.DeserializeObject<Packet>(deser);
+			var p = JsonConvert.DeserializeObject<Packet>(deser);
 
 			//using (MemoryStream ms = new MemoryStream(buffer)) {
 			//	BinaryFormatter bin = new BinaryFormatter();
@@ -311,7 +302,7 @@ namespace ViData
 			//	bytes = ms.ToArray();
 			//}
 
-			string json = JsonConvert.SerializeObject(this);
+			var json = JsonConvert.SerializeObject(this);
 
 			return Encoding.UTF8.GetBytes(json);
 		}
@@ -354,23 +345,23 @@ namespace ViData
 
 		public Information(InformationType t, string user, string msg)
 		{
-			this.Type = t;
-			this.User = user;
-			this.Message = msg;
+			Type = t;
+			User = user;
+			Message = msg;
 		}
 
 		public Information(InformationType t, List<string> contacts)
 		{
-			this.Type = t;
-			this.Contacts = contacts;
+			Type = t;
+			Contacts = contacts;
 		}
 
 		public Information(Information info)
 		{
-			this.Type = info.Type;
-			this.User = info.User;
-			this.Message = info.Message;
-			this.Contacts = info.Contacts;
+			Type = info.Type;
+			User = info.User;
+			Message = info.Message;
+			Contacts = info.Contacts;
 		}
 	}
 
@@ -384,7 +375,7 @@ namespace ViData
 		public int Type;
 		public byte[] Password;
 		public byte[] Salt;
-		public string AvatarURI;
+		public string AvatarUri;
 		public string NickColor;
 
 		public User()
@@ -393,93 +384,79 @@ namespace ViData
 
 		public User(User u)
 		{
-			this.Username = u.Username;
-			this.Email = u.Email;
-			this.Password = u.Password;
-			this.Salt = u.Salt;
+			Username = u.Username;
+			Email = u.Email;
+			Password = u.Password;
+			Salt = u.Salt;
 		}
 
 		public User(string login, byte[] pwd)
 		{
-			this.Username = login;
-			this.Password = pwd;
+			Username = login;
+			Password = pwd;
 		}
 
 		public User(string name, string mail, byte[] pwd, byte[] salt)
 		{
-			this.Username = name;
-			this.Email = mail;
-			this.Salt = salt;
-			this.Password = pwd;
+			Username = name;
+			Email = mail;
+			Salt = salt;
+			Password = pwd;
 		}
 
-		public User(string avatarURI, string nickColor)
+		public User(string avatarUri, string nickColor)
 		{
-			this.AvatarURI = avatarURI;
-			this.NickColor = nickColor;
+			AvatarUri = avatarUri;
+			NickColor = nickColor;
 		}
 
-		private DataTable AddUserColumns(DataTable tb)
+	    public bool Login()
 		{
-			tb.Columns.Add("id", typeof(int));
-			tb.Columns.Add("username", typeof(string));
-			tb.Columns.Add("nickname", typeof(string));
-			tb.Columns.Add("email", typeof(string));
-			tb.Columns.Add("type", typeof(int));
-			tb.Columns.Add("pwd", typeof(byte[]));
-			tb.Columns.Add("salt", typeof(byte[]));
+	        const string precmd = "SELECT * FROM server.users WHERE username = @username";
 
-			return tb;
-		}
-
-		public bool Login()
-		{
-			DataTable tb = new DataTable("user");
-
-			string precmd = "SELECT * FROM server.users WHERE username = @username";
-			bool result;
-
-			using (Database db = new Database()) {
-				using (MySqlCommand cmd = new MySqlCommand(precmd, db.Connection)) {
+	        using (var db = new Database()) {
+				using (var cmd = new MySqlCommand(precmd, db.Connection)) {
 					cmd.Parameters.Add("@username", MySqlDbType.String);
 					cmd.Parameters["@username"].Value = Username;
 
-					tb = Database.Select(cmd);
+					var tb = Database.Select(cmd);
 
 					if (tb.Rows.Count <= 0) {
 						return false;
 					}
 
-					DataRow row = tb.Rows[0];
+					var row = tb.Rows[0];
 
-					byte[] pwd = (byte[])row["pwd"];
+					var pwd = (byte[])row["pwd"];
 					Salt = (byte[])row["salt"];
-					result = ConfirmPassword(pwd);
+					var result = ConfirmPassword(pwd);
 
-					if (result) {
-						ID = (int)row["id"];
-						Username = (string)row["username"];
-						Nickname = (string)row["nickname"];
-						Email = (string)row["email"];
-						Type = (int)row["type"];
-						Password = (byte[])row["pwd"];
-						Salt = (byte[])row["salt"];
-						AvatarURI = (string)row["avatar"];
-						NickColor = (string)row["nick_color"];
-					}
+				    if (!result) {
+				        return false;
+				    }
+
+				    ID = (int)row["id"];
+				    Username = (string)row["username"];
+				    Nickname = (string)row["nickname"];
+				    Email = (string)row["email"];
+				    Type = (int)row["type"];
+				    Password = (byte[])row["pwd"];
+				    Salt = (byte[])row["salt"];
+				    AvatarUri = (string)row["avatar"];
+				    NickColor = (string)row["nick_color"];
 				}
 			}
 
-			return result;
+			return true;
 		}
 
 		public bool Register()
 		{
-			string precmd = "INSERT INTO server.users(id, username, nickname, email, pwd, salt)" +
-					"VALUES(null, @username, @username, @email, @pwd, @salt)";
-			int ret = -1;
-			using (Database db = new Database()) {
-				using (MySqlCommand cmd = new MySqlCommand(precmd, db.Connection)) {
+			const string precmd = "INSERT INTO server.users(id, username, nickname, email, pwd, salt)" +
+			                      "VALUES(null, @username, @username, @email, @pwd, @salt)";
+			int ret;
+			using (var db = new Database()) {
+				using (var cmd = new MySqlCommand(precmd, db.Connection)) {
 					cmd.Parameters.Add("@username", MySqlDbType.String);
 					cmd.Parameters.Add("@email", MySqlDbType.VarChar);
 					cmd.Parameters.Add("@pwd", MySqlDbType.VarBinary);
@@ -501,7 +478,7 @@ namespace ViData
 
 		public bool ConfirmPassword(byte[] hashedpwd)
 		{
-			byte[] pwdHash = Tools.Hash(Password, Salt);
+			var pwdHash = Tools.Hash(Password, Salt);
 
 			return hashedpwd.SequenceEqual(pwdHash);
 		}
