@@ -1,5 +1,6 @@
-﻿using System.Security.Permissions;
-using System.Windows;
+﻿using System.Collections.Generic;
+using System.Security.Permissions;
+using ViCommV2.Classes;
 
 namespace ViCommV2
 {
@@ -7,7 +8,7 @@ namespace ViCommV2
     ///     Interaction logic for FormHelper.xaml
     /// </summary>
     [SecurityPermission(SecurityAction.Demand, Flags = SecurityPermissionFlag.ControlAppDomain)]
-    public partial class FormHelper : Window
+    public partial class FormHelper
     {
         private static FormHelper _instance;
 
@@ -17,26 +18,21 @@ namespace ViCommV2
             _instance = this;
 
             SettingsManager = SettingsProvider.Instance;
+            SingleChat = new Dictionary<string, SingleChatWindow>();
 
             Login = new LoginWindow();
             Login.Show();
         }
 
-        public static FormHelper Instance {
-            get {
-                if (_instance == null) {
-                    _instance = new FormHelper();
-                }
-
-                return _instance;
-            }
-        }
+        public static FormHelper Instance => _instance ?? (_instance = new FormHelper());
 
         #region Fields
 
-        public static bool isClosing { get; set; }
+        public static bool IsClosing { get; set; }
 
         public MainWindow Main { get; set; }
+
+        public Dictionary<string, SingleChatWindow> SingleChat;
 
         public LoginWindow Login { get; set; }
 
@@ -47,12 +43,7 @@ namespace ViCommV2
         private NotifyWindow _notifyWindow;
 
         public NotifyWindow Notify {
-            get {
-                if (_notifyWindow == null) {
-                    _notifyWindow = new NotifyWindow();
-                }
-                return _notifyWindow;
-            }
+            get { return _notifyWindow ?? (_notifyWindow = new NotifyWindow()); }
             set { _notifyWindow = value; }
         }
 

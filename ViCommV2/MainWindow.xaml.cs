@@ -1,19 +1,15 @@
 ﻿using System;
 using System.ComponentModel;
-using System.Diagnostics;
-using System.Runtime.InteropServices;
 using System.Security.Permissions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
-using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 using System.Windows.Threading;
 using ViCommV2.Classes;
+using ViCommV2.Interfaces;
 using ViData;
 
 // StickyWindow
@@ -24,24 +20,8 @@ namespace ViCommV2
     ///     Interaction logic for MainWindow.xaml
     /// </summary>
     [SecurityPermission(SecurityAction.Demand, Flags = SecurityPermissionFlag.ControlAppDomain)]
-    public partial class MainWindow : Window
+    public partial class MainWindow : IChatWindow
     {
-        public enum FormState
-        {
-            Null,
-            Exit,
-            Close,
-            Logout
-        }
-
-        public enum RowType
-        {
-            Information,
-            User,
-            Sender
-        }
-
-        private readonly bool _enterPressed = false;
         private double _timeElapsed;
         private bool _tStarted;
         private DispatcherTimer _tWriting;
@@ -50,9 +30,9 @@ namespace ViCommV2
         {
             InitializeComponent();
 
-            DataContext = SettingsProvider.Instance.settings;
-
-            var stick = new WindowStickManager(this);
+            DataContext = SettingsProvider.Instance.Settings;
+            
+            WindowStickManager.AddWindow(this);
         }
 
         private void Initialize()
@@ -61,30 +41,28 @@ namespace ViCommV2
             Sound.AddSound(Sound.SoundType.Message, new Uri(@"Resources\Sounds\mp3_message.mp3", UriKind.Relative));
 
             Emoticons.ReadXml();
+            Emoticons.RefreshCollection(this, grid_emoticons);
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             Initialize();
-            Emoticons.RefreshCollection(grid_emoticons);
-
+            
             Forms = FormHelper.Instance;
             Connect();
 
             // Display user nickname
-            Title = "ViComm | Nick: " + Client.user.Nickname;
-            lb_Header.Content = "ViComm | Nick: " + Client.user.Nickname;
+            Title = "ViComm | Nick: " + Client.User.Nickname;
+            lb_Header.Content = "ViComm | Nick: " + Client.User.Nickname;
             BackgroundColor = Brushes.CadetBlue;
 
             State = FormState.Exit;
             inputBox.Focus();
+            
+            Client.MultiChatMessageReceived += MultiChatReceived;
+            Client.SingleChatMessageReceived += SingleChatWindow.SingleChatReceived;
         }
-
-        private void CM_Clear_Click(object sender, RoutedEventArgs e)
-        {
-            chatBox.Document.Blocks.Clear();
-        }
-
+        
         private void inputBox_PreviewKeyDown(object sender, KeyEventArgs e)
         {
             if (Keyboard.Modifiers == ModifierKeys.Control && Keyboard.IsKeyDown(Key.Enter)) {
@@ -115,100 +93,37 @@ namespace ViCommV2
 
         private void Send(string s)
         {
-            Client.Send(s);
+            Client.Send(s, PacketType.MultiChat);
         }
 
-        private Table Message(Packet packet, RowType rowType)
+        public void MultiChatReceived(Packet p)
         {
-            var date = new Run(string.Format("{0:HH:mm:ss}", packet.Date.ToLocalTime()));
-            date.SetBinding(TextElement.FontFamilyProperty, new Binding("DateFont.Name"));
-            date.SetBinding(TextElement.FontSizeProperty, new Binding("DateFont.Size"));
-            date.SetBinding(TextElement.ForegroundProperty, new Binding("DateForeground"));
+            var sound = new Sound();
 
-            var text = new Run(packet.Sender + ": " + packet.Message);
-
-            var bitmap = new BitmapImage(new Uri(packet.User.AvatarURI, UriKind.Absolute) ??
-                                         new Uri(@"Resources\Images\avatar.png", UriKind.Relative));
-
-            var rect = new Rectangle {
-                RadiusX = 10,
-                RadiusY = 10,
-                Width = 24,
-                Height = 24,
-                Fill = new ImageBrush(bitmap)
-            };
-            RenderOptions.SetBitmapScalingMode(rect, BitmapScalingMode.HighQuality);
-            var container = new InlineUIContainer(rect);
-            var avatar = new Paragraph(container);
-
-            var txt = new Paragraph(text) {
-                Margin = new Thickness(1)
-            };
-            txt.DetectEmoticonsAndURL();
-            txt.ColorizeName(packet.Sender.Length, packet.User.NickColor);
-            txt.SetBinding(TextElement.ForegroundProperty, new Binding("MessageForeground"));
-
-            var dT = new Paragraph(date) {
-                Margin = new Thickness(0, 0, 0, 1)
-            };
-
-            var tab = new Table {
-                Margin = new Thickness(0, 2, 0, 2)
-            };
-
-            var gridLenghtConverter = new GridLengthConverter();
-
-            //1. col
-            tab.Columns.Add(new TableColumn {
-                Name = "colAvatar",
-                Width = (GridLength) gridLenghtConverter.ConvertFromString("28")
-            });
-            //2.col
-            tab.Columns.Add(new TableColumn {
-                Name = "colMsg",
-                Width = (GridLength) gridLenghtConverter.ConvertFromString("Auto")
-            });
-            //3.col
-            tab.Columns.Add(new TableColumn {
-                Name = "colDt",
-                Width = (GridLength) gridLenghtConverter.ConvertFromString("50")
-            });
-
-            tab.RowGroups.Add(new TableRowGroup());
-            tab.RowGroups[0].Rows.Add(new TableRow());
-
-            var tabRow = tab.RowGroups[0].Rows[0];
-
-            switch (rowType) {
-                case RowType.User:
-                    tabRow.Style = (Style) chatBox.Resources["RowUser"];
-                    break;
-                case RowType.Sender:
-                    tabRow.Style = (Style) chatBox.Resources["RowSender"];
-
-                    if (ApplicationIsActivated() == false) {
-                        Forms.Notify.ShowMessage(bitmap, text.Text);
-                        Forms.Notify.Show();
-                    }
-                    break;
+            if (p.Type == PacketType.Information) {
+                sound.Play(Sound.SoundType.Available);
+                
+                AppendInfoText($"* {p.Information.User} {p.Information.Message}");
             }
+            else {
+                RowType rowType;
 
-            //1.col - NICK
-            tabRow.Cells.Add(new TableCell(avatar));
+                if (p.Sender != Client.User.Nickname) {
+                    rowType = RowType.Sender;
+                    sound.Play(Sound.SoundType.Message);
+                }
+                else {
+                    rowType = RowType.User;
+                }
 
-            //2.col - MESSAGE
-            tabRow.Cells.Add(new TableCell(txt));
-
-            //3.col  - DATE TIME
-            tabRow.Cells.Add(new TableCell(dT));
-
-            return tab;
+                AppendText(p, rowType);
+            }
         }
 
         public void AppendText(Packet packet, RowType rowType)
         {
-            chatBox.Document.Blocks.Add(Message(packet, rowType));
-            chatBox.CenterText();
+            chatBox.Document.Blocks.Add(MessageManager.Message(packet, rowType, chatBox));
+            chatBox.CenterTextVertically();
             chatBox.ScrollToEnd();
         }
 
@@ -218,10 +133,15 @@ namespace ViCommV2
 
             p.Inlines.Add(new Run(text));
 
-            p.DetectURL();
+            p.DetectUrl();
 
             chatBox.Document.Blocks.Add(p);
             chatBox.ScrollToEnd();
+        }
+
+        private void CM_Clear_Click(object sender, RoutedEventArgs e)
+        {
+            chatBox.Document.Blocks.Clear();
         }
 
         private void CM_Settings_Click(object sender, RoutedEventArgs e)
@@ -241,6 +161,12 @@ namespace ViCommV2
             State = FormState.Logout;
 
             Forms.Dispatcher.Invoke(new Action(() => {
+                foreach (var single in Forms.SingleChat.Values) {
+                    single.Close();
+                }
+
+                Forms.SingleChat.Clear();
+
                 Forms.Login = new LoginWindow();
                 Forms.Login.Show();
             }));
@@ -261,12 +187,7 @@ namespace ViCommV2
 
         private void CM_Maximize_Click(object sender, RoutedEventArgs e)
         {
-            if (WindowState == WindowState.Maximized) {
-                WindowState = WindowState.Normal;
-            }
-            else {
-                WindowState = WindowState.Maximized;
-            }
+            WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
         }
 
         public void CloseWindow()
@@ -285,10 +206,8 @@ namespace ViCommV2
 
         private void Logout()
         {
-            if (Client != null) {
-                Client.Disconnect(false);
-            }
-            FormHelper.isClosing = true;
+            Client?.Disconnect(false);
+            FormHelper.IsClosing = true;
         }
 
         private void Window_Closing(object sender, CancelEventArgs e)
@@ -304,34 +223,9 @@ namespace ViCommV2
                     break;
             }
         }
-
-        [DllImport("user32.dll", CharSet = CharSet.Auto, ExactSpelling = true)]
-        private static extern IntPtr GetForegroundWindow();
-
-        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        private static extern int GetWindowThreadProcessId(IntPtr handle, out int processId);
-
-        /// <summary>Returns true if the current application has focus, false otherwise</summary>
-        public static bool ApplicationIsActivated()
-        {
-            var activatedHandle = GetForegroundWindow();
-            if (activatedHandle == IntPtr.Zero) {
-                return false; // No window is currently activated
-            }
-
-            var procId = Process.GetCurrentProcess().Id;
-            int activeProcId;
-            GetWindowThreadProcessId(activatedHandle, out activeProcId);
-
-            return activeProcId == procId;
-        }
-
+        
         private void inputBox_TextChanged(object sender, TextChangedEventArgs e)
         {
-            if (_enterPressed) {
-                return;
-            }
-
             _timeElapsed = 0;
 
             if (_tStarted) {
@@ -343,21 +237,23 @@ namespace ViCommV2
             _tWriting.Tick += t_writing_Tick;
             _tWriting.Start();
 
-            var p = new Packet(PacketType.Information);
-            p.Information = new Information(InformationType.Writing, Client.user.Nickname, "started");
+            var p = new Packet(PacketType.Information) {
+                Information = new Information(InformationType.Writing, Client.User.Nickname, "started")
+            };
             Client.Send(p);
         }
 
         private void t_writing_Tick(object sender, EventArgs e)
         {
-            if ((_timeElapsed >= 1000) || _enterPressed) {
+            if (_timeElapsed >= 1000) {
                 _tWriting.Tick -= t_writing_Tick;
                 _tWriting.Stop();
                 _tWriting = null;
                 _tStarted = false;
 
-                var p = new Packet(PacketType.Information);
-                p.Information = new Information(InformationType.Writing, Client.user.Nickname, "stopped");
+                var p = new Packet(PacketType.Information) {
+                    Information = new Information(InformationType.Writing, Client.User.Nickname, "stopped")
+                };
                 Client.Send(p);
             }
             else {
@@ -368,7 +264,7 @@ namespace ViCommV2
         private void list_Contacts_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             var l = sender as ListBox;
-            l.UpdateLayout();
+            l?.UpdateLayout();
         }
 
         private void bt_menu_Click(object sender, RoutedEventArgs e)
@@ -406,11 +302,9 @@ namespace ViCommV2
 
         private void Window_Activated(object sender, EventArgs e)
         {
-            var Notify = FormHelper.Instance.Notify;
+            var notify = FormHelper.Instance.Notify;
 
-            if (Notify != null) {
-                Notify.Close();
-            }
+            notify?.Close();
         }
 
         #region Properties
@@ -425,10 +319,37 @@ namespace ViCommV2
 
         public Brush BackgroundColor { get; set; }
 
-        public ListBox ListContacts {
-            get { return list_Contacts; }
-        }
+        public ListBox ListContacts => list_Contacts;
 
-        #endregion Fields
+        public ScrollViewer GetEmoticonsContainer() => emoticonsContainer;
+
+        public TextBox GetInputTextBox() => inputBox;
+
+        #endregion Properties
+
+        private void list_Contacts_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            var obj = (DependencyObject)e.OriginalSource;
+
+            while (obj != null && !Equals(obj, list_Contacts)) {
+                if (obj.GetType() == typeof(ListBoxItem)) {
+                    var name = ((ListBox)e.Source).SelectedValue as string;
+
+                    if (name == null) {
+                        return;
+                    }
+
+                    if (!Forms.SingleChat.ContainsKey(name)) {
+                        Forms.SingleChat.Add(name, new SingleChatWindow(name));
+                    }
+
+                    Forms.SingleChat[name].Show();
+                    Forms.SingleChat[name].Focus();
+
+                    break;
+                }
+                obj = VisualTreeHelper.GetParent(obj);
+            }
+        }
     }
 }
