@@ -5,7 +5,7 @@ using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Documents;
 
-namespace ViCommV2
+namespace ViCommV2.Classes
 {
     public static class HyperlinkManager
     {
@@ -13,7 +13,7 @@ namespace ViCommV2
             new Regex(
                 @"(?#Protocol)(?:(?:ht|f)tp(?:s?)\:\/\/|~/|/)?(?#Username:Password)(?:\w+:\w+@)?(?#Subdomains)(?:(?:[-\w]+\.)+(?#TopLevel Domains)(?:com|org|net|gov|mil|biz|info|mobi|name|aero|jobs|museum|travel|[a-z]{2}))(?#Port)(?::[\d]{1,5})?(?#Directories)(?:(?:(?:/(?:[-\w~!$+|.,=]|%[a-f\d]{2})+)+|/)+|\?|#)?(?#Query)(?:(?:\?(?:[-\w~!$+|.,*:]|%[a-f\d{2}])+=(?:[-\w~!$+|.,*:=]|%[a-f\d]{2})*)(?:&amp;(?:[-\w~!$+|.,*:]|%[a-f\d{2}])+=(?:[-\w~!$+|.,*:=]|%[a-f\d]{2})*)*)*(?#Anchor)(?:#(?:[-\w~!$+|.,*:=]|%[a-f\d]{2})*)?");
 
-        public static void DetectURL(this Paragraph p)
+        public static void DetectUrl(this Paragraph p)
         {
             var text = new TextRange(p.ContentStart, p.ContentEnd).Text;
             var lastPos = 0;
@@ -30,7 +30,7 @@ namespace ViCommV2
                     }
 
                     if (uri != null) {
-                        var index = text.IndexOf(word, lastPos) + insertedUrlChars + 1;
+                        var index = text.IndexOf(word, lastPos, StringComparison.Ordinal) + insertedUrlChars + 1;
                         var indexEnd = index + word.Length;
 
                         var point = position.GetPositionAtOffset(index);

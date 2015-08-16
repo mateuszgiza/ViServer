@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
+using ViCommV2.Classes;
 
 namespace ViCommV2
 {
@@ -16,7 +17,7 @@ namespace ViCommV2
         {
             InitializeComponent();
 
-            DataContext = SettingsProvider.Instance.settings;
+            DataContext = SettingsProvider.Instance.Settings;
 
             var desktopWorkingArea = SystemParameters.WorkArea;
             Left = desktopWorkingArea.Right - Width - 5;
@@ -31,9 +32,9 @@ namespace ViCommV2
 
         private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            var Main = FormHelper.Instance.Main;
-            Main.WindowState = WindowState.Normal;
-            Main.Focus();
+            var main = FormHelper.Instance.Main;
+            main.WindowState = WindowState.Normal;
+            main.Focus();
             Close();
         }
 

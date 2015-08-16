@@ -6,7 +6,7 @@ using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Media;
 
-namespace ViCommV2
+namespace ViCommV2.Classes
 {
     public static class Extensions
     {
@@ -18,7 +18,7 @@ namespace ViCommV2
         public static float? ToFloat(this string s)
         {
             float? temp = null;
-            if (s != null && s != string.Empty) {
+            if (!string.IsNullOrEmpty(s)) {
                 temp = float.Parse(s);
             }
 
@@ -28,14 +28,14 @@ namespace ViCommV2
         public static bool? ToBoolean(this string s)
         {
             bool? temp = null;
-            if (s != null && s != string.Empty) {
+            if (!string.IsNullOrEmpty(s)) {
                 temp = bool.Parse(s);
             }
 
             return temp;
         }
 
-        public static void CenterText(this RichTextBox rtb)
+        public static void CenterTextVertically(this RichTextBox rtb)
         {
             var text = new TextRange(rtb.Document.ContentStart, rtb.Document.ContentEnd);
             text.ApplyPropertyValue(Inline.BaselineAlignmentProperty, BaselineAlignment.Center);
@@ -50,7 +50,7 @@ namespace ViCommV2
             name.ApplyPropertyValue(TextElement.ForegroundProperty, BrushExtension.FromARGB(color));
         }
 
-        public static void DetectEmoticonsAndURL(this Paragraph p)
+        public static void DetectEmoticonsAndUrl(this Paragraph p)
         {
             var full = p.Inlines.FirstInline as Run;
             var text = new TextRange(p.ContentStart, p.ContentEnd).Text;
@@ -62,7 +62,7 @@ namespace ViCommV2
 
                     var lastPos = 0;
                     foreach (var emoticon in emoticons) {
-                        var lastEmoticon = word.IndexOf(emoticon, lastPos);
+                        var lastEmoticon = word.IndexOf(emoticon, lastPos, StringComparison.Ordinal);
                         var textBefore = word.Substring(lastPos, lastEmoticon - lastPos);
 
                         var before = new Run(textBefore);
@@ -145,7 +145,7 @@ namespace ViCommV2
             }
 
             var c = brush.Color;
-            return string.Format("#{0:X2}{1:X2}{2:X2}{3:X2}", c.A, c.R, c.G, c.B);
+            return $"#{c.A:X2}{c.R:X2}{c.G:X2}{c.B:X2}";
         }
 
         public static SolidColorBrush FromARGB(this SolidColorBrush brush, string argb)
@@ -169,23 +169,25 @@ namespace ViCommV2
         }
 
         private static readonly Dictionary<SoundType, MediaPlayer> Sounds = new Dictionary<SoundType, MediaPlayer>();
-        private MediaPlayer s;
+        private MediaPlayer _player;
 
         public static void AddSound(SoundType key, Uri path)
         {
-            if (Sounds.ContainsKey(key) == false) {
-                var p = new MediaPlayer();
-                p.Open(path);
-                Sounds.Add(key, p);
+            if (Sounds.ContainsKey(key)) {
+                return;
             }
+
+            var p = new MediaPlayer();
+            p.Open(path);
+            Sounds.Add(key, p);
         }
 
         public void Play(SoundType type)
         {
-            s = Sounds[type];
+            _player = Sounds[type];
 
-            s.Stop();
-            s.Play();
+            _player.Stop();
+            _player.Play();
         }
     }
 }

@@ -12,7 +12,7 @@ namespace ViCommV2
     /// <summary>
     ///     Interaction logic for LoginWindow.xaml
     /// </summary>
-    public partial class LoginWindow : Window
+    public partial class LoginWindow
     {
         public enum FormState
         {
@@ -21,15 +21,15 @@ namespace ViCommV2
             Logged
         }
 
-        private ClientManager client;
-        public FormState state;
+        private ClientManager _client;
+        public FormState State;
 
         public LoginWindow()
         {
             InitializeComponent();
             InitializeEvents();
 
-            var stick = new WindowStickManager(this);
+            WindowStickManager.AddWindow(this);
         }
 
         public void InitializeEvents()
@@ -41,7 +41,7 @@ namespace ViCommV2
             lb_Register.MouseLeftButtonUp += (sender, e) => {
                 helper.Register = new RegisterWindow();
                 helper.Register.Show();
-                state = FormState.Logging;
+                State = FormState.Logging;
                 Close();
             };
 
@@ -63,22 +63,23 @@ namespace ViCommV2
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            state = FormState.Null;
+            State = FormState.Null;
             tb_login.Focus();
         }
 
         private void Login()
         {
             if (tb_login.Text != "" && tb_pwd.Password != "") {
-                client = ClientManager.Instance;
+                _client = ClientManager.Instance;
 
-                client.Connect();
+                _client.Connect();
 
-                if (client.Connected) {
-                    client.Login(tb_login.Text, Encoding.UTF8.GetBytes(tb_pwd.Password));
-
-                    state = FormState.Logging;
+                if (!_client.Connected) {
+                    return;
                 }
+                _client.Login(tb_login.Text, Encoding.UTF8.GetBytes(tb_pwd.Password));
+
+                State = FormState.Logging;
             }
             else {
                 if (tb_login.Text == "") {
@@ -119,10 +120,12 @@ namespace ViCommV2
 
         private void Window_Closing(object sender, CancelEventArgs e)
         {
-            if (state == FormState.Null) {
-                FormHelper.isClosing = true;
-                Environment.Exit(0);
+            if (State != FormState.Null) {
+                return;
             }
+
+            FormHelper.IsClosing = true;
+            Environment.Exit(0);
         }
     }
 }

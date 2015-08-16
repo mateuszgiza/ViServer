@@ -14,12 +14,12 @@ namespace ViCommV2
     /// <summary>
     ///     Interaction logic for RegisterWindow.xaml
     /// </summary>
-    public partial class RegisterWindow : Window
+    public partial class RegisterWindow
     {
-        private readonly DispatcherTimer timer = new DispatcherTimer {Interval = new TimeSpan(0, 0, 0, 0, 100)};
+        private readonly DispatcherTimer _timer = new DispatcherTimer {Interval = new TimeSpan(0, 0, 0, 0, 100)};
         private bool _lock;
-        private ClientManager client;
-        private int numErrors;
+        private ClientManager _client;
+        private int _numErrors;
 
         public RegisterWindow()
         {
@@ -30,7 +30,7 @@ namespace ViCommV2
 
             bt_register.IsEnabled = false;
 
-            var stick = new WindowStickManager(this);
+            WindowStickManager.AddWindow(this);
         }
 
         public bool Registered { get; set; }
@@ -38,41 +38,32 @@ namespace ViCommV2
         private void InitializeEvents()
         {
             bt_register.Click += (sender, e) => { Register(); };
-            tb_name.KeyDown += (sender, e) => {
-                if (e.Key == Key.Enter) {
-                    Register();
-                }
-            };
-            tb_mail.KeyDown += (sender, e) => {
-                if (e.Key == Key.Enter) {
-                    Register();
-                }
-            };
-            tb_pwd.KeyDown += (sender, e) => {
-                if (e.Key == Key.Enter) {
-                    Register();
-                }
-            };
-            tb_repwd.KeyDown += (sender, e) => {
-                if (e.Key == Key.Enter) {
-                    Register();
-                }
-            };
+            tb_name.KeyDown += InputBox_KeyDown;
+            tb_mail.KeyDown += InputBox_KeyDown;
+            tb_pwd.KeyDown += InputBox_KeyDown;
+            tb_repwd.KeyDown += InputBox_KeyDown;
         }
 
+        private void InputBox_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter) {
+                Register();
+            }
+        }
+        
         private void Register()
         {
-            var LoginName = tb_name.Text;
-            var Mail = tb_mail.Text;
-            var Password = tb_pwd.Password;
-            var RePassword = tb_repwd.Password;
+            var loginName = tb_name.Text;
+            var mail = tb_mail.Text;
+            var password = tb_pwd.Password;
+            var rePassword = tb_repwd.Password;
 
-            if (LoginName != "" && Mail != "" && Password != "" && RePassword != "") {
-                if (Password.Equals(RePassword)) {
-                    client = ClientManager.Instance;
+            if (loginName != "" && mail != "" && password != "" && rePassword != "") {
+                if (password.Equals(rePassword)) {
+                    _client = ClientManager.Instance;
 
-                    client.Connect();
-                    client.Register(LoginName, Mail, Encoding.UTF8.GetBytes(Password));
+                    _client.Connect();
+                    _client.Register(loginName, mail, Encoding.UTF8.GetBytes(password));
 
                     Registered = true;
                 }
@@ -87,58 +78,64 @@ namespace ViCommV2
 
         private void Window_Closing(object sender, CancelEventArgs e)
         {
-            if (!Registered) {
-                var helper = FormHelper.Instance;
-                helper.Login = new LoginWindow();
-                helper.Login.Show();
+            if (Registered) {
+                return;
             }
+
+            var helper = FormHelper.Instance;
+            helper.Login = new LoginWindow();
+            helper.Login.Show();
         }
 
         private void Validation_Error(object sender, ValidationErrorEventArgs e)
         {
             if (e.Action == ValidationErrorEventAction.Added) {
-                numErrors++;
+                _numErrors++;
             }
             else {
-                numErrors--;
+                _numErrors--;
             }
 
             if (tb_name.Text.Length > 0 && tb_mail.Text.Length > 0 && tb_pwd.Password.Length > 0 &&
                 tb_repwd.Password.Length > 0) {
-                bt_register.IsEnabled = numErrors == 0;
+                bt_register.IsEnabled = _numErrors == 0;
             }
         }
 
         private void Password_SourceUpdated(object sender, DataTransferEventArgs e)
         {
-            if (_lock == false) {
-                timer.Start();
-                _lock = true;
-                timer.Tick += (s, ev) => {
-                    _lock = false;
-                    timer.Stop();
-                };
-                tb_repwd.GetBindingExpression(PasswordHelper.PasswordProperty).UpdateSource();
+            if (_lock) {
+                return;
             }
+
+            _timer.Start();
+            _lock = true;
+            _timer.Tick += (s, ev) => {
+                _lock = false;
+                _timer.Stop();
+            };
+            tb_repwd.GetBindingExpression(PasswordHelper.PasswordProperty)?.UpdateSource();
         }
 
         private void RePassword_SourceUpdated(object sender, DataTransferEventArgs e)
         {
-            if (_lock == false) {
-                timer.Start();
-                _lock = true;
-                timer.Tick += (s, ev) => {
-                    _lock = false;
-                    timer.Stop();
-                };
-                tb_pwd.GetBindingExpression(PasswordHelper.PasswordProperty).UpdateSource();
+            if (_lock) {
+                return;
             }
+
+            _timer.Start();
+            _lock = true;
+            _timer.Tick += (s, ev) => {
+                _lock = false;
+                _timer.Stop();
+            };
+            tb_pwd.GetBindingExpression(PasswordHelper.PasswordProperty)?.UpdateSource();
         }
     }
 
     public class RegisterWindowViewModel : IDataErrorInfo
     {
-        private readonly Regex EmailRegex =
+        private readonly Regex _emailRegex =
             new Regex(@"^[a-zA-Z][\w\.-]*[a-zA-Z0-9]@[a-zA-Z0-9][\w\.-]*[a-zA-Z0-9]\.[a-zA-Z][a-zA-Z\.]*[a-zA-Z]$");
 
         //property to bind to textbox
@@ -152,19 +149,28 @@ namespace ViCommV2
 
         public string this[string columnName] {
             get {
-                if (columnName == "Email") {
-                    if (Email != null) {
-                        if (!EmailRegex.Match(Email).Success) {
+                switch (columnName) {
+                    case "Email":
+                        if (Email == null) {
+                            return "";
+                        }
+
+                        if (!_emailRegex.Match(Email).Success) {
                             return "Not a valid e-mail address!";
                         }
-                    }
-                }
-                else if (columnName == "Password" || columnName == "RePassword") {
-                    if (Password != null && RePassword != null) {
+
+                        break;
+                    case "Password":
+                    case "RePassword":
+                        if (Password == null || RePassword == null) {
+                            return "";
+                        }
+
                         if (!Password.Equals(RePassword)) {
                             return "Passwords are not the same!";
                         }
-                    }
+
+                        break;
                 }
 
                 return "";
@@ -175,9 +181,7 @@ namespace ViCommV2
 
         protected virtual void OnPropertyChanged(string propertyName)
         {
-            if (PropertyChanged != null) {
-                PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
-            }
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
         public string Error {

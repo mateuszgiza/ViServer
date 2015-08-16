@@ -7,12 +7,13 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Xml;
+using ViCommV2.Interfaces;
 
-namespace ViCommV2
+namespace ViCommV2.Classes
 {
     public class Emoticons
     {
-        private static readonly string filePath = @"Resources\Images\Emoticons\default.xml";
+        private static readonly string _filePath = @"Resources\Images\Emoticons\default.xml";
         private static readonly Dictionary<string, Uri> _emoticons = new Dictionary<string, Uri>();
         private static int _lastColumn = 5;
         private static int _lastRow = -1;
@@ -21,15 +22,17 @@ namespace ViCommV2
 
         public static void Add(string name, string path)
         {
-            if (_emoticons.ContainsKey(name.ToLower()) == false) {
-                _emoticons.Add(name.ToLower(), new Uri(path, UriKind.Relative));
-                AddtoRegex(name.ToLower());
-
-                InsertToGrid(FormHelper.Instance.Main.grid_emoticons, name);
+            if (_emoticons.ContainsKey(name.ToLower())) {
+                return;
             }
+            _emoticons.Add(name.ToLower(), new Uri(path, UriKind.Relative));
+            AddtoRegex(name.ToLower());
+
+            var main = FormHelper.Instance.Main;
+            InsertToGrid(main, main.grid_emoticons, name);
         }
 
-        private static void InsertToGrid(Grid grid, string name)
+        private static void InsertToGrid(IChatWindow window, Grid grid, string name)
         {
             if (_lastColumn > 4) {
                 _lastColumn = 0;
@@ -41,16 +44,16 @@ namespace ViCommV2
                 grid.Height = (_lastRow + 1)*25;
             }
 
-            var Main = FormHelper.Instance.Main;
+            var inputBox = window.GetInputTextBox();
 
             var item = GetEmoticonFromString(name);
             item.MouseLeftButtonUp += (sender, e) => {
-                Main.inputBox.AppendText(name);
-                Main.emoticonsContainer.Visibility = Visibility.Hidden;
-                Main.inputBox.CaretIndex = Main.inputBox.Text.Length;
-                Main.inputBox.Focus();
+                inputBox.AppendText(name);
+                window.GetEmoticonsContainer().Visibility = Visibility.Hidden;
+                inputBox.CaretIndex = inputBox.Text.Length;
+                inputBox.Focus();
             };
-            item.Style = (Style) Main.FindResource("emoticonHover");
+            item.Style = (Style) window.FindResource("emoticonHover");
             item.ToolTip = name;
 
             Grid.SetColumn(item, _lastColumn);
@@ -60,24 +63,20 @@ namespace ViCommV2
             grid.Children.Add(item);
         }
 
-        public static void RefreshCollection(Grid grid)
+        public static void RefreshCollection(IChatWindow window, Grid grid)
         {
             _lastColumn = 5;
             _lastRow = -1;
             grid.Children.Clear();
 
             foreach (var name in _emoticons.Keys) {
-                InsertToGrid(grid, name);
+                InsertToGrid(window, grid, name);
             }
         }
 
         public static Uri GetPath(string name)
         {
-            if (_emoticons.ContainsKey(name.ToLower())) {
-                return _emoticons[name.ToLower()];
-            }
-
-            return null;
+            return _emoticons.ContainsKey(name.ToLower()) ? _emoticons[name.ToLower()] : null;
         }
 
         private static void AddtoRegex(string name)
@@ -86,7 +85,7 @@ namespace ViCommV2
                 _emoticonRegex += @"|";
             }
 
-            _emoticonRegex += string.Format("({0})", Regex.Escape(name.ToLower()));
+            _emoticonRegex += $"({Regex.Escape(name.ToLower())})";
             EmoticonRegex = new Regex(_emoticonRegex);
         }
 
@@ -113,7 +112,7 @@ namespace ViCommV2
                 return string.Empty;
             }
 
-            var start = word.ToLower().IndexOf(match);
+            var start = word.ToLower().IndexOf(match, StringComparison.Ordinal);
 
             return word.Substring(start, match.Length);
         }
@@ -125,7 +124,7 @@ namespace ViCommV2
             var lastPos = 0;
 
             foreach (var match in matches) {
-                var start = word.ToLower().IndexOf(match, lastPos);
+                var start = word.ToLower().IndexOf(match, lastPos, StringComparison.Ordinal);
                 lastPos = start + match.Length;
                 wordMatches.Add(word.Substring(start, match.Length));
             }
@@ -140,7 +139,7 @@ namespace ViCommV2
 
         public static void ReadXml()
         {
-            using (var reader = XmlReader.Create(filePath)) {
+            using (var reader = XmlReader.Create(_filePath)) {
                 while (reader.Read()) {
                     if (!reader.IsStartElement()) {
                         continue;

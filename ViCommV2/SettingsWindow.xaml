@@ -2,12 +2,13 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:ViCommV2"
+        xmlns:classes="clr-namespace:ViCommV2.Classes"
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         Title="Ustawienia" Height="350" Width="500" MinHeight="350" MinWidth="500"
         Background="{Binding BackgroundColor}" WindowStyle="ToolWindow" ResizeMode="NoResize" ShowInTaskbar="False"
         WindowStartupLocation="CenterOwner" Closing="Window_Closing" Topmost="{Binding AlwaysOnTop}">
     <Window.DataContext>
-        <local:Settings />
+        <classes:Settings />
     </Window.DataContext>
 
     <Grid>
