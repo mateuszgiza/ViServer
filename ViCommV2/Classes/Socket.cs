@@ -5,48 +5,47 @@ using System.Windows;
 using System.Windows.Controls;
 using ViData;
 
-namespace ViCommV2
+namespace ViCommV2.Classes
 {
-    public class ClientManager : IDisposable
+    public class ClientManager
     {
         private static ClientManager _instance;
-        private readonly IPEndPoint ip;
-        private readonly Socket socket;
-        private byte[] buffer;
-        public FormHelper forms = FormHelper.Instance;
-        private string guid;
-        public User user;
+        private readonly IPEndPoint _ip;
+        private readonly Socket _socket;
+        private byte[] _buffer;
+        public FormHelper Forms = FormHelper.Instance;
+        private string _guid;
+        public User User;
+
+        public delegate void MultiChatEventHandler(Packet p);
+        public delegate void SingleChatEventHandler(Packet p);
+
+        public MultiChatEventHandler MultiChatMessageReceived;
+        public SingleChatEventHandler SingleChatMessageReceived;
 
         public ClientManager(string host, int port)
         {
-            socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            socket.ReceiveTimeout = 10;
-            socket.SendTimeout = 10;
-            ip = new IPEndPoint(IPAddress.Parse(host), port);
+            _socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp) {
+                ReceiveTimeout = 10,
+                SendTimeout = 10
+            };
+            _ip = new IPEndPoint(IPAddress.Parse(host), port);
         }
 
-        public static ClientManager Instance {
-            get {
-                if (_instance == null) {
-                    _instance = new ClientManager(Tools.GetIP(), 5555);
-                }
+        public static ClientManager Instance => _instance ?? (_instance = new ClientManager(Tools.GetIp(), 5555));
 
-                return _instance;
-            }
-        }
-
-        public bool Connected {
-            get { return socket.Connected; }
-        }
+        public bool Connected => _socket.Connected;
 
         public void Connect()
         {
-            if (socket.Connected) {
+            if (_socket.Connected) {
                 return;
             }
 
             try {
-                socket.Connect(ip);
+                _socket.ReceiveTimeout = 100;
+                _socket.SendTimeout = 100;
+                _socket.Connect(_ip);
                 StartReceiving();
             }
             catch {
@@ -56,8 +55,9 @@ namespace ViCommV2
 
         public void Login(string login, byte[] pwd)
         {
-            var p = new Packet(PacketType.Login);
-            p.User = new User(login, pwd);
+            var p = new Packet(PacketType.Login) {
+                User = new User(login, pwd)
+            };
             Send(p);
         }
 
@@ -66,23 +66,24 @@ namespace ViCommV2
             var msg = p.Message;
 
             if (p.User != null) {
-                guid = p.Message;
-                user = p.User;
+                _guid = p.Message;
+                User = p.User;
                 var contacts = p.Information.Contacts.ToArray();
 
-                forms.Dispatcher.Invoke(new Action(() => {
-                    forms.Main = new MainWindow();
+                Forms.Dispatcher.Invoke(new Action(() => {
+                    Forms.Main = new MainWindow();
 
-                    if (forms.Login != null) {
-                        forms.Login.state = LoginWindow.FormState.Logged;
-                        forms.Login.Close();
+                    if (Forms.Login != null) {
+                        Forms.Login.State = LoginWindow.FormState.Logged;
+                        Forms.Login.Close();
+                        Forms.Login = null;
                     }
 
                     foreach (var c in contacts) {
-                        forms.Main.ListContacts.Items.Add(c);
+                        Forms.Main.ListContacts.Items.Add(c);
                     }
 
-                    forms.Main.Show();
+                    Forms.Main.Show();
                 }));
             }
             else {
@@ -92,8 +93,9 @@ namespace ViCommV2
 
         public void Register(string name, string email, byte[] pwd)
         {
-            var p = new Packet(PacketType.Register);
-            p.User = new User(name, email, pwd, Tools.GenerateSalt());
+            var p = new Packet(PacketType.Register) {
+                User = new User(name, email, pwd, Tools.GenerateSalt())
+            };
 
             Send(p);
         }
@@ -107,20 +109,28 @@ namespace ViCommV2
             MessageBox.Show(msg, "Register");
             if (result == "1") {
                 Login(p.User.Username, p.User.Password);
-                forms.Dispatcher.Invoke(new Action(() => {
-                    forms.Register.Registered = true;
-                    forms.Register.Close();
+                Forms.Dispatcher.Invoke(new Action(() => {
+                    Forms.Register.Registered = true;
+                    Forms.Register.Close();
+                    Forms.Register = null;
                 }));
             }
         }
 
-        public void Send(string msg)
+        public void Send(string msg, PacketType type)
         {
-            var p = new Packet(PacketType.MultiChat);
-            p.User = new User(user.AvatarURI, user.NickColor);
-            p.Date = DateTime.Now;
-            p.Sender = user.Nickname;
-            p.Message = msg;
+            Send(msg, type, null);
+        }
+
+        public void Send(string msg, PacketType type, string receiver)
+        {
+            var p = new Packet(type) {
+                User = new User(User.AvatarUri, User.NickColor),
+                Date = DateTime.Now,
+                Sender = User.Nickname,
+                Receiver = receiver,
+                Message = msg
+            };
 
             Send(p);
         }
@@ -128,10 +138,11 @@ namespace ViCommV2
         public void Send(Packet p)
         {
             try {
-                socket.Send(p.ToBytes());
-            }
-            catch (SocketException e) {
-                App.HandleException(e);
+                _socket.Send(p.ToBytes());
+                
+                if (p.Type == PacketType.SingleChat) {
+                    Forms.SingleChat[p.Receiver].AppendText(p);
+                }
             }
             catch (Exception e) {
                 App.HandleException(e);
@@ -140,31 +151,31 @@ namespace ViCommV2
 
         public void StartReceiving()
         {
-            FormHelper.isClosing = false;
-            buffer = new byte[8192];
+            if (!_socket.Connected) {
+                return;
+            }
 
-            socket.BeginReceive(buffer, 0, buffer.Length, SocketFlags.None, OnReceive, null);
+            FormHelper.IsClosing = false;
+            _buffer = new byte[8192];
+
+            _socket.BeginReceive(_buffer, 0, _buffer.Length, SocketFlags.None, OnReceive, null);
         }
 
         private void OnReceive(IAsyncResult ar)
         {
             try {
-                if (FormHelper.isClosing) {
+                if (FormHelper.IsClosing) {
                     return;
                 }
 
-                var readBytes = socket.EndReceive(ar);
+                var readBytes = _socket.EndReceive(ar);
 
                 if (readBytes > 0) {
-                    Received(new Packet(buffer));
+                    Received(new Packet(_buffer));
                 }
 
-                buffer = new byte[8192];
-                socket.BeginReceive(buffer, 0, buffer.Length, SocketFlags.None, OnReceive, null);
-            }
-            catch (ObjectDisposedException) {}
-            catch (SocketException e) {
-                App.HandleException(e);
+                _buffer = new byte[8192];
+                _socket.BeginReceive(_buffer, 0, _buffer.Length, SocketFlags.None, OnReceive, null);
             }
             catch (Exception e) {
                 App.HandleException(e);
@@ -191,89 +202,93 @@ namespace ViCommV2
                     break;
 
                 case PacketType.SingleChat:
-                    // Reserved
+                    Forms.Dispatcher.Invoke(new Action(() => SingleChatMessageReceived(p)));
                     break;
 
                 case PacketType.MultiChat:
-                    AppendText(p);
-                    break;
-
-                default:
+                    Forms.Dispatcher.Invoke(new Action(() => MultiChatMessageReceived(p)));
                     break;
             }
         }
 
         private void Information(Packet p)
         {
-            var main = forms.Main;
+            if (!string.IsNullOrEmpty(p.Receiver)) {
+                if (p.Information.Type != InformationType.Writing) return;
 
-            if (p.Information.Type == InformationType.Joining) {
-                AddItemToListBox(main.ListContacts, p.Information.User);
-                AppendText(p);
+                var sender = p.Information.User;
+
+                Forms.Dispatcher.Invoke(new Action(() => {
+                    if (!Forms.SingleChat.ContainsKey(sender)) {
+                        return;
+                    }
+
+                    var window = Forms.SingleChat[sender];
+                    window.Title = p.Information.Message == "started" ? $"Private Chat: {sender}..." : $"Private Chat: {sender}";
+                }));
+                
+                return;
             }
-            else if (p.Information.Type == InformationType.Leaving) {
-                RemoveItemFromListBox(main.ListContacts, p.Information.User);
-                AppendText(p);
-            }
-            else if (p.Information.Type == InformationType.Writing) {
-                if (p.Information.Message == "started") {
-                    ChangeItemInListBox(main.ListContacts, p.Information.User, "*| " + p.Information.User);
-                }
-                else {
-                    ChangeItemInListBox(main.ListContacts, "*| " + p.Information.User, p.Information.User);
-                }
+
+            var main = Forms.Main;
+
+            switch (p.Information.Type) {
+                case InformationType.Joining:
+                    AddItemToListBox(main.ListContacts, p.Information.User);
+                    AppendText(p);
+                    break;
+                case InformationType.Leaving:
+                    RemoveItemFromListBox(main.ListContacts, p.Information.User);
+                    AppendText(p);
+                    break;
+                case InformationType.Writing:
+                    if (p.Information.Message == "started") {
+                        ChangeItemInListBox(main.ListContacts, p.Information.User, "*| " + p.Information.User);
+                    }
+                    else {
+                        ChangeItemInListBox(main.ListContacts, "*| " + p.Information.User, p.Information.User);
+                    }
+                    break;
             }
         }
-
-        public void AddItemToListBox(ListBox list, object o)
+        
+        public void AddItemToListBox(ListBox list, object obj)
         {
-            forms.Dispatcher.Invoke(new Action(() => { list.Items.Add(o); }));
+            Forms.Dispatcher.Invoke(new Action(() => { list.Items.Add(obj); }));
         }
 
-        public void RemoveItemFromListBox(ListBox list, object o)
+        public void RemoveItemFromListBox(ListBox list, object obj)
         {
-            forms.Dispatcher.Invoke(new Action(() => {
-                if (list.Items.Contains(o)) {
-                    list.Items.Remove(o);
+            Forms.Dispatcher.Invoke(new Action(() => {
+                if (list.Items.Contains(obj)) {
+                    list.Items.Remove(obj);
                 }
             }));
         }
 
-        public void ChangeItemInListBox(ListBox list, object o, object changed)
+        public void ChangeItemInListBox(ListBox list, object current, object newObject)
         {
-            forms.Dispatcher.Invoke(new Action(() => {
-                if (list.Items.Contains(o)) {
-                    var i = list.Items.IndexOf(o);
-                    list.Items[i] = changed;
+            Forms.Dispatcher.Invoke(new Action(() => {
+                if (list.Items.Contains(current)) {
+                    var i = list.Items.IndexOf(current);
+                    list.Items[i] = newObject;
                 }
             }));
         }
 
         private void AppendText(Packet packet)
         {
-            forms.Dispatcher.Invoke(new Action(() => {
-                var main = forms.Main;
+            Forms.Dispatcher.Invoke(new Action(() => {
                 var sound = new Sound();
 
-                if (packet.Type == PacketType.Information) {
-                    sound.Play(Sound.SoundType.Available);
-
-                    var msg = packet.Information.User + " " + packet.Information.Message;
-                    main.AppendInfoText(string.Format("* {0}", msg));
+                if (packet.Type != PacketType.Information) {
+                    return;
                 }
-                else {
-                    MainWindow.RowType rowType;
 
-                    if (packet.Sender != user.Nickname) {
-                        rowType = MainWindow.RowType.Sender;
-                        sound.Play(Sound.SoundType.Message);
-                    }
-                    else {
-                        rowType = MainWindow.RowType.User;
-                    }
+                sound.Play(Sound.SoundType.Available);
 
-                    main.AppendText(packet, rowType);
-                }
+                var msg = packet.Information.User + " " + packet.Information.Message;
+                Forms.Main.AppendInfoText($"* {msg}");
             }));
         }
 
@@ -281,14 +296,16 @@ namespace ViCommV2
         {
             MessageBox.Show(p.Message, p.Sender);
 
-            forms.Dispatcher.Invoke(new Action(() => {
-                forms.Login = new LoginWindow();
-                forms.Login.Show();
+            Forms.Dispatcher.Invoke(new Action(() => {
+                Forms.Login = new LoginWindow();
+                Forms.Login.Show();
 
-                if (forms.Main != null) {
-                    forms.Main.State = MainWindow.FormState.Close;
-                    forms.Main.CloseWindow();
+                if (Forms.Main == null) {
+                    return;
                 }
+
+                Forms.Main.State = FormState.Close;
+                Forms.Main.CloseWindow();
             }));
 
             Disconnect(true);
@@ -297,10 +314,9 @@ namespace ViCommV2
         public void Disconnect(bool server)
         {
             if (server == false) {
-                if (socket.Connected) {
-                    var p = new Packet(PacketType.Disconnect);
-                    p.Message = guid;
-                    socket.Send(p.ToBytes());
+                if (_socket.Connected) {
+                    var p = new Packet(PacketType.Disconnect) { Message = _guid };
+                    _socket.Send(p.ToBytes());
                 }
             }
 
@@ -309,43 +325,9 @@ namespace ViCommV2
 
         private void CloseConnection()
         {
-            if (socket != null) {
-                socket.Close();
-            }
+            _socket?.Close();
 
             _instance = null;
         }
-
-        #region Dispose Implementation
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        ~ClientManager()
-        {
-            Dispose(false);
-        }
-
-        private bool _disposed;
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (_disposed) {
-                return;
-            }
-
-            if (disposing) {
-                // Free any other managed objects here.
-                socket.Dispose();
-            }
-            // Free any unmanaged objects here.
-
-            _disposed = true;
-        }
-
-        #endregion Dispose Implementation
     }
 }
