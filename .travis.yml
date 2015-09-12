@@ -1,5 +1,16 @@
-language: csharp
-solution: ViServer.sln
+## Travis CI Integration
+
+language: c
+
 install:
-  - sudo apt-get install -y gtk-sharp2
+  - sudo apt-get install mono-devel mono-gmcs nunit-console
   - nuget restore ViServer.sln
+script:
+  - xbuild Artemis_Mono/Artemis_Mono.sln
+  - nunit-console Artemis_Mono/bin/Debug/ArtemisMonoUnitTests.dll
+
+## language: csharp
+## solution: ViServer.sln
+## install:
+##  - sudo apt-get install -y gtk-sharp2
+##  - nuget restore ViServer.sln
